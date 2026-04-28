@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Json", "Json.csproj", "{F8B70D8B-563A-4E94-9ED4-AC9F38D4DD5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonTests", "..\JsonTests\JsonTests.csproj", "{978DFF1B-EE08-4D8A-BB1D-30D06DECDF3B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F8B70D8B-563A-4E94-9ED4-AC9F38D4DD5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8B70D8B-563A-4E94-9ED4-AC9F38D4DD5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8B70D8B-563A-4E94-9ED4-AC9F38D4DD5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8B70D8B-563A-4E94-9ED4-AC9F38D4DD5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{978DFF1B-EE08-4D8A-BB1D-30D06DECDF3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{978DFF1B-EE08-4D8A-BB1D-30D06DECDF3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{978DFF1B-EE08-4D8A-BB1D-30D06DECDF3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{978DFF1B-EE08-4D8A-BB1D-30D06DECDF3B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
