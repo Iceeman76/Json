@@ -151,6 +151,24 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
+    public static void WriteSubTree(this Utf8JsonWriter writer, JsonTree.Node node)
+    {
+        if (node.Kind is not (JsonValueKind.Object or JsonValueKind.Array))
+        {
+            writer.WriteNode(node with { InArray = true });
+            return;
+        }
+
+        writer.WriteStartNode(node);
+
+        foreach (var child in node.Children)
+        {
+            child.BuildRecursiveJson(writer);
+        }
+
+        writer.WriteEndNode(node);
+    }
+
     public static void WriteEndNode(this Utf8JsonWriter writer, JsonTree.Node node)
     {
         if (node.Kind is JsonValueKind.Array)

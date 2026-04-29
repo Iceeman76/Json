@@ -17,7 +17,8 @@ Generate modern, clean, and production-ready C# code that is:
 
 - Do not put comments in the code
 - Code should be in English
-- Prefer clarity over cleverness
+- Prefer clarity to cleverness
+- Avoid defensive code such as null checks etc.
 - Avoid unnecessary abstractions
 - Write self-explanatory code (minimize comments)
 - Use expressive naming
@@ -43,7 +44,8 @@ Generate modern, clean, and production-ready C# code that is:
 ## 🧩 Code Style
 
 - Use **file-scoped namespaces**
-- Namespaces should correspond to file location
+- Namespaces should correspond to the file location
+- If-statements should always use brackets
 - Records and classes should be sealed by default
 - Prefer **records** for immutable data
 - Prefer **init-only setters** where possible
