@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"/c/Program Files/dotnet/dotnet.exe\" test \"C:/Private/Json/JsonTests\")"
+      "Bash(\"/c/Program Files/dotnet/dotnet.exe\" test \"C:/Private/Json/JsonTests\")",
+      "Bash(dotnet test *)",
+      "Read(//c/Program Files/dotnet//**)",
+      "Read(//mnt/c/Program Files/**)",
+      "Bash(\"/c/Program Files/dotnet/dotnet.exe\" test \"C:/Private/Json/JsonTests/JsonTests.csproj\" --filter \"FullyQualifiedName~FindNode\" --nologo)",
+      "Bash(\"/c/Program Files/dotnet/dotnet.exe\" test \"C:/Private/Json/JsonTests/JsonTests.csproj\" --filter \"FullyQualifiedName~Node_ToString\" --nologo)",
+      "Bash(\"/c/Program Files/dotnet/dotnet.exe\" test \"C:/Private/Json/JsonTests/JsonTests.csproj\" --nologo)"
     ]
   }
 }
