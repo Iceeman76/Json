@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Json;
 
-public sealed record JsonFieldSelector
+public sealed partial record JsonFieldSelector
 {
     private readonly JsonTree _tree;
 
@@ -15,26 +15,29 @@ public sealed record JsonFieldSelector
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public JsonFieldSelector(string jsonString) : this(JsonTree.Create(jsonString))
+    public JsonFieldSelector(string jsonString)
     {
-    }
-
-    public JsonFieldSelector(JsonTree tree)
-    {
-        _tree = tree;
+        _tree = JsonTree.Create(jsonString);
     }
 
     public string Select(string pathExpression)
     {
         if (pathExpression == "$")
+        {
             return _tree.ToJsonString();
+        }
 
-        var projectionMatch = Regex.Match(pathExpression, @"\[([a-zA-Z_][a-zA-Z0-9_]*(?:,[a-zA-Z_][a-zA-Z0-9_]*)+)\]$");
+        var projectionMatch = ProjectionRegex().Match(pathExpression);
+
         if (projectionMatch.Success)
+        {
             return SelectProjection(pathExpression, projectionMatch);
+        }
 
         if (pathExpression.Contains("[*]") || pathExpression.Contains(".*"))
+        {
             return SelectWildcard(pathExpression);
+        }
 
         var node = _tree.FindNode(pathExpression)!;
 
@@ -44,28 +47,37 @@ public sealed record JsonFieldSelector
         writer.WriteSubTree(node);
         writer.Flush();
 
-        return Encoding.UTF8.GetString(stream.ToArray());
+        var jsonString = Encoding.UTF8.GetString(stream.ToArray());
+
+        return jsonString;
     }
 
     private string SelectWildcard(string pathExpression)
     {
-        var pattern = "^" + Regex.Escape(pathExpression.Replace("[*]", "\x01").Replace("*", "\x02"))
-            .Replace("\x01", @"\[\d+\]")
-            .Replace("\x02", @"[^.\[\]]+") + "$";
+        var expression = pathExpression.Replace("[*]", "\x01").Replace("*", "\x02");
+        var escaped = Regex.Escape(expression).Replace("\x01", @"\[\d+\]").Replace("\x02", @"[^.\[\]]+");
+        var pattern = $"^{escaped}$";
 
-        var matchedNodes = _tree.Flatten().Where(n => Regex.IsMatch(n.Identity, pattern));
+        var matchedNodes = _tree.Flatten().Where(node => Regex.IsMatch(node.Identity, pattern, RegexOptions.IgnoreCase));
         var wrapInArray = pathExpression.Contains("[*]");
 
         using var stream = new MemoryStream();
         using var writer = new Utf8JsonWriter(stream, _options);
 
         if (wrapInArray) writer.WriteStartArray();
+
         foreach (var node in matchedNodes)
+        {
             writer.WriteSubTree(node);
+        }
+
         if (wrapInArray) writer.WriteEndArray();
+
         writer.Flush();
 
-        return Encoding.UTF8.GetString(stream.ToArray());
+        var jsonString = Encoding.UTF8.GetString(stream.ToArray());
+
+        return jsonString;
     }
 
     private string SelectProjection(string pathExpression, Match projectionMatch)
@@ -78,12 +90,16 @@ public sealed record JsonFieldSelector
 
         if (basePath.Contains("[*]"))
         {
-            var basePattern = "^" + Regex.Escape(basePath.Replace("[*]", "\x01"))
-                .Replace("\x01", @"\[\d+\]") + "$";
+            var basePattern = "^" + Regex.Escape(basePath.Replace("[*]", "\x01")).Replace("\x01", @"\[\d+\]") + "$";
+            var nodes = _tree.Flatten().Where(node => Regex.IsMatch(node.Identity, basePattern));
 
             writer.WriteStartArray();
-            foreach (var node in _tree.Flatten().Where(n => Regex.IsMatch(n.Identity, basePattern)))
+
+            foreach (var node in nodes)
+            {
                 WriteProjectionAsObject(writer, node.Identity, fields);
+            }
+
             writer.WriteEndArray();
         }
         else
@@ -92,18 +108,27 @@ public sealed record JsonFieldSelector
         }
 
         writer.Flush();
-        return Encoding.UTF8.GetString(stream.ToArray());
+
+        var jsonString = Encoding.UTF8.GetString(stream.ToArray());
+
+        return jsonString;
     }
 
     private void WriteProjectionAsObject(Utf8JsonWriter writer, string basePath, string[] fields)
     {
         writer.WriteStartObject();
+
         foreach (var field in fields)
         {
-            var node = _tree.FindNode($"{basePath}.{field}");
-            if (node is not null)
-                node.BuildRecursiveJson(writer);
+            var identity = $"{basePath}.{field}";
+            var node = _tree.FindNode(identity);
+
+            node?.BuildRecursiveJson(writer);
         }
+
         writer.WriteEndObject();
     }
+
+    [GeneratedRegex(@"\[([a-zA-Z_][a-zA-Z0-9_]*(?:,[a-zA-Z_][a-zA-Z0-9_]*)+)\]$")]
+    private static partial Regex ProjectionRegex();
 }
