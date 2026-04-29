@@ -7,6 +7,7 @@ namespace Json;
 public partial record JsonTree
 {
     private readonly Node _rootNode;
+    private Node[]? _flattened;
 
     private readonly JsonWriterOptions _defaultOptions = new()
     {
@@ -114,7 +115,7 @@ public partial record JsonTree
         return Encoding.UTF8.GetString(stream.ToArray());
     }
 
-    public IEnumerable<Node> Flatten() => _rootNode.Flatten();
+    public Node[] Flatten() => _flattened ??= _rootNode.Flatten().ToArray();
 
     public override string ToString() => _rootNode.BuildBranchString();
 }
