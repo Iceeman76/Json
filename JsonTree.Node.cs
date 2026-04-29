@@ -13,11 +13,15 @@ public partial record JsonTree
         public bool InArray { get; set; }
         public IEnumerable<Node> Children => _children;
 
+        private bool HasChildren => _children.Count > 0;
+
         private Node? _parent;
         private readonly List<Node> _children = [];
+        private string? _identity;
 
-        private bool HasChildren => _children.Count > 0;
-        public string Identity => string.IsNullOrEmpty(_parent?.Identity) ? Name : $"{_parent?.Identity}.{Name}".Replace(".[", "[");
+        public string Identity => _identity ??= string.IsNullOrEmpty(_parent?.Identity)
+            ? Name
+            : $"{_parent.Identity}.{Name}".Replace(".[", "[");
 
         private static readonly Regex IdentifierRegex = JavaScriptIdentifierRegex();
 
