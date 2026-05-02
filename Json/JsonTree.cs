@@ -29,9 +29,9 @@ public partial record JsonTree
         return tree;
     }
 
-    public Node? FindNode(string identity)
+    public Node? FindNode(string identity, StringComparison comparison = StringComparison.Ordinal)
     {
-        return Flatten().FirstOrDefault(x => x.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase));
+        return Flatten().FirstOrDefault(x => x.Identity.Equals(identity, comparison));
     }
 
     private void DoTraverse(JsonElement element, Node node)

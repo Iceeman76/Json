@@ -320,7 +320,7 @@ public class JsonTreeTests
     }
 
     [Test]
-    public void FindNode_is_case_insensitive()
+    public void FindNode_is_case_sensitive_by_default()
     {
         const string jsonString = """
                                   {"Person":{"Name":"Alice"}}
@@ -328,6 +328,19 @@ public class JsonTreeTests
 
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.PERSON.name");
+
+        node.Should().BeNull();
+    }
+
+    [Test]
+    public void FindNode_supports_case_insensitive_lookup_when_requested()
+    {
+        const string jsonString = """
+                                  {"Person":{"Name":"Alice"}}
+                                  """;
+
+        var tree = JsonTree.Create(jsonString);
+        var node = tree.FindNode("$.PERSON.name", StringComparison.OrdinalIgnoreCase);
 
         node.Should().NotBeNull();
         node.Value.Should().Be("Alice");
