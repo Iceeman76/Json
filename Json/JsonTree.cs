@@ -20,12 +20,16 @@ public partial record JsonTree
         _rootNode = rootNode;
     }
 
-    public static JsonTree Create(string jsonString, string rootName = "$")
+    public const int DefaultMaxDepth = 64;
+
+    public static JsonTree Create(string jsonString, string rootName = "$", int maxDepth = DefaultMaxDepth)
     {
-        using var doc = JsonDocument.Parse(jsonString);
+        var documentOptions = new JsonDocumentOptions { MaxDepth = maxDepth };
+
         var rootNode = new Node(rootName);
         var tree = new JsonTree(rootNode);
 
+        using var doc = JsonDocument.Parse(jsonString, documentOptions);
         tree.DoTraverse(doc.RootElement, tree._rootNode);
 
         return tree;

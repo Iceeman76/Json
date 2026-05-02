@@ -19,7 +19,7 @@ public class JsonTreeTests
         nodes.Should().HaveCount(564);
         tree.ToJsonString().Should().Be(jsonString);
     }
-    
+
     [Test]
     public void Simple_flat_object()
     {
@@ -488,5 +488,54 @@ public class JsonTreeTests
         act.Should()
             .ThrowExactly<InvalidOperationException>()
             .WithMessage("Node '$.a' has Kind = Undefined and cannot be written.");
+    }
+
+    [Test]
+    public void Create_throws_when_json_exceeds_default_max_depth()
+    {
+        var jsonString = BuildNestedJson(JsonTree.DefaultMaxDepth + 1);
+
+        var act = () => JsonTree.Create(jsonString);
+
+        act.Should().Throw<JsonException>();
+    }
+
+    [Test]
+    public void Create_accepts_json_at_default_max_depth()
+    {
+        var jsonString = BuildNestedJson(JsonTree.DefaultMaxDepth);
+
+        var act = () => JsonTree.Create(jsonString);
+
+        act.Should().NotThrow();
+    }
+
+    [Test]
+    public void Create_respects_custom_max_depth()
+    {
+        var jsonString = BuildNestedJson(10);
+
+        var act = () => JsonTree.Create(jsonString, maxDepth: 5);
+
+        act.Should().Throw<JsonException>();
+    }
+
+    private static string BuildNestedJson(int depth)
+    {
+        var sb = new StringBuilder();
+
+        for (var i = 0; i < depth; i++)
+        {
+            sb.Append("{\"a\":");
+        }
+
+        sb.Append('1');
+
+        for (var i = 0; i < depth; i++)
+        {
+            sb.Append('}');
+        }
+
+        return sb.ToString();
     }
 }
