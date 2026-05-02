@@ -18,6 +18,11 @@ internal static class Utf8JsonWriterExtensions
 
     public static void WriteNode(this Utf8JsonWriter writer, JsonTree.Node node)
     {
+        if (node.Kind is JsonValueKind.Undefined)
+        {
+            throw new InvalidOperationException($"Node '{node.Identity}' has Kind = Undefined and cannot be written.");
+        }
+
         MethodRouter[node.Kind].Invoke(writer, node);
     }
 
