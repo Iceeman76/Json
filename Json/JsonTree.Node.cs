@@ -14,7 +14,7 @@ public sealed partial class JsonTree
         public string? Value { get; set; }
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
-        public IEnumerable<Node> Children => _children;
+        public IReadOnlyList<Node> Children => _children;
 
         private bool HasChildren => _children.Count > 0;
 
