@@ -85,7 +85,7 @@ public partial record JsonTree
 
         foreach (var item in element.EnumerateArray())
         {
-            var node = parent.AddNode($"[{index}]", isArrayIndex: true);
+            var node = parent.AddNode(index.ToString(), isArrayIndex: true);
             node.InArray = true;
             DoTraverse(item, node);
             index++;

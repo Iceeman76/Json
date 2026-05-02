@@ -520,6 +520,53 @@ public class JsonTreeTests
         act.Should().Throw<JsonException>();
     }
 
+    [Test]
+    public void Name_is_raw_key_for_invalid_identifier()
+    {
+        const string jsonString = """
+                                  {"first name":"Alice"}
+                                  """;
+
+        var tree = JsonTree.Create(jsonString);
+        var node = tree.FindNode("$['first name']");
+
+        node.Should().NotBeNull();
+        node.Name.Should().Be("first name");
+        node.PathSegment.Should().Be("['first name']");
+        node.Identity.Should().Be("$['first name']");
+    }
+
+    [Test]
+    public void Name_is_raw_index_for_array_element()
+    {
+        const string jsonString = """
+                                  {"numbers":[10,20]}
+                                  """;
+
+        var tree = JsonTree.Create(jsonString);
+        var node = tree.FindNode("$.numbers[1]");
+
+        node.Should().NotBeNull();
+        node.Name.Should().Be("1");
+        node.PathSegment.Should().Be("[1]");
+        node.Identity.Should().Be("$.numbers[1]");
+    }
+
+    [Test]
+    public void Name_equals_path_segment_for_valid_identifier()
+    {
+        const string jsonString = """
+                                  {"name":"Alice"}
+                                  """;
+
+        var tree = JsonTree.Create(jsonString);
+        var node = tree.FindNode("$.name");
+
+        node.Should().NotBeNull();
+        node.Name.Should().Be("name");
+        node.PathSegment.Should().Be("name");
+    }
+
     private static string BuildNestedJson(int depth)
     {
         var sb = new StringBuilder();

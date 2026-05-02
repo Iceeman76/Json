@@ -54,7 +54,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteNumber(node.Name.Wash(), value);
+            writer.WriteNumber(node.Name, value);
         }
     }
 
@@ -66,7 +66,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteNumber(node.Name.Wash(), value);
+            writer.WriteNumber(node.Name, value);
         }
     }
 
@@ -78,7 +78,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteNumber(node.Name.Wash(), value);
+            writer.WriteNumber(node.Name, value);
         }
     }
 
@@ -90,7 +90,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteString(node.Name.Wash(), node.Value);
+            writer.WriteString(node.Name, node.Value);
         }
     }
 
@@ -102,7 +102,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteNull(node.Name.Wash());
+            writer.WriteNull(node.Name);
         }
     }
 
@@ -116,7 +116,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteBoolean(node.Name.Wash(), value);
+            writer.WriteBoolean(node.Name, value);
         }
     }
 
@@ -128,7 +128,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteStartObject(node.Name.Wash());
+            writer.WriteStartObject(node.Name);
         }
     }
 
@@ -140,7 +140,7 @@ internal static class Utf8JsonWriterExtensions
         }
         else
         {
-            writer.WriteStartArray(node.Name.Wash());
+            writer.WriteStartArray(node.Name);
         }
     }
 
@@ -185,9 +185,4 @@ internal static class Utf8JsonWriterExtensions
             writer.WriteEndObject();
         }
     }
-}
-
-file static class Extensions
-{
-    public static string Wash(this string name) => name.Replace("'", "").Replace("[", "").Replace("]", "");
 }

@@ -9,6 +9,7 @@ public partial record JsonTree
     public sealed partial class Node(string name = "")
     {
         public string Name { get; } = name;
+        public string PathSegment { get; private init; } = name;
         public string Identity { get; private init; } = name;
         public string? Value { get; set; }
         public JsonValueKind Kind { get; set; }
@@ -24,18 +25,18 @@ public partial record JsonTree
 
         internal Node AddNode(string name, bool isArrayIndex)
         {
-            if (isArrayIndex == false && IdentifierRegex.IsMatch(name) == false)
-            {
-                name = $"['{name}']";
-            }
+            var pathSegment = isArrayIndex
+                ? $"[{name}]"
+                : IdentifierRegex.IsMatch(name) ? name : $"['{name}']";
 
             var identity = string.IsNullOrEmpty(Identity)
-                ? name
-                : $"{Identity}.{name}".Replace(".[", "[");
+                ? pathSegment
+                : $"{Identity}.{pathSegment}".Replace(".[", "[");
 
             var node = new Node(name)
             {
                 _parent = this,
+                PathSegment = pathSegment,
                 Identity = identity
             };
 
