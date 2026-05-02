@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Json;
 
 namespace JsonTests;
@@ -26,7 +26,7 @@ public class JsonFieldSelectorTests
         var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$");
 
-        result.Should().Be(jsonString);
+        Assert.That(result, Is.EqualTo(jsonString));
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class JsonFieldSelectorTests
                                 {"name":"Alice","age":30}
                                 """;
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -58,7 +58,7 @@ public class JsonFieldSelectorTests
 
         const string expected = "30";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -73,7 +73,7 @@ public class JsonFieldSelectorTests
 
         const string expected = """["Allan","Bertil"]""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class JsonFieldSelectorTests
 
         const string expected = """[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class JsonFieldSelectorTests
 
         const string expected = """["Alice","Bob","Charlie","Dave"]""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -116,7 +116,7 @@ public class JsonFieldSelectorTests
 
         const string expected = """{"name":"Alice","age":30}""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -129,7 +129,7 @@ public class JsonFieldSelectorTests
 
         const string expected = """{"name":"Alice","age":30}""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -142,7 +142,7 @@ public class JsonFieldSelectorTests
 
         const string expected = """[{"title":"Sayings of the Century","price":8.95},{"title":"Sword of Honour","price":12.99},{"title":"Moby Dick","price":8.99},{"title":"The Lord of the Rings","price":22.99}]""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -157,7 +157,7 @@ public class JsonFieldSelectorTests
 
         const string expected = """[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -170,6 +170,6 @@ public class JsonFieldSelectorTests
 
         const string expected = """{"name":"Alice","age":30}""";
 
-        result.Should().Be(expected);
+        Assert.That(result, Is.EqualTo(expected));
     }
 }

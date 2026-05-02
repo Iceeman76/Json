@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Json;
@@ -15,10 +15,13 @@ public class JsonTreeTests
     {
         var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
-        nodes.Should().HaveCount(564);
-        tree.ToJsonString().Should().Be(jsonString);
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes, Has.Length.EqualTo(564));
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -29,15 +32,18 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.a");
-        nodes[1].Identity.Should().Be("$.b");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.a"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.b"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -48,16 +54,19 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.person");
-        nodes[1].Identity.Should().Be("$.person.name");
-        nodes[2].Identity.Should().Be("$.person.age");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.person"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.person.name"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$.person.age"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -68,17 +77,20 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.numbers");
-        nodes[1].Identity.Should().Be("$.numbers[0]");
-        nodes[2].Identity.Should().Be("$.numbers[1]");
-        nodes[3].Identity.Should().Be("$.numbers[2]");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.numbers"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.numbers[0]"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$.numbers[1]"));
+            Assert.That(nodes[3].Identity, Is.EqualTo("$.numbers[2]"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -89,18 +101,21 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.users");
-        nodes[1].Identity.Should().Be("$.users[0]");
-        nodes[2].Identity.Should().Be("$.users[0].id");
-        nodes[3].Identity.Should().Be("$.users[1]");
-        nodes[4].Identity.Should().Be("$.users[1].id");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.users"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.users[0]"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$.users[0].id"));
+            Assert.That(nodes[3].Identity, Is.EqualTo("$.users[1]"));
+            Assert.That(nodes[4].Identity, Is.EqualTo("$.users[1].id"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -111,18 +126,21 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.mixed");
-        nodes[1].Identity.Should().Be("$.mixed[0]");
-        nodes[2].Identity.Should().Be("$.mixed[1]");
-        nodes[3].Identity.Should().Be("$.mixed[2]");
-        nodes[4].Identity.Should().Be("$.mixed[2].three");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.mixed"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.mixed[0]"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$.mixed[1]"));
+            Assert.That(nodes[3].Identity, Is.EqualTo("$.mixed[2]"));
+            Assert.That(nodes[4].Identity, Is.EqualTo("$.mixed[2].three"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -133,16 +151,19 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$['first name']");
-        nodes[1].Identity.Should().Be("$['123key']");
-        nodes[2].Identity.Should().Be("$['key.with.dot']");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$['first name']"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$['123key']"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$['key.with.dot']"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -153,20 +174,23 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.matrix");
-        nodes[1].Identity.Should().Be("$.matrix[0]");
-        nodes[2].Identity.Should().Be("$.matrix[0][0]");
-        nodes[3].Identity.Should().Be("$.matrix[0][1]");
-        nodes[4].Identity.Should().Be("$.matrix[1]");
-        nodes[5].Identity.Should().Be("$.matrix[1][0]");
-        nodes[6].Identity.Should().Be("$.matrix[1][1]");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.matrix"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.matrix[0]"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$.matrix[0][0]"));
+            Assert.That(nodes[3].Identity, Is.EqualTo("$.matrix[0][1]"));
+            Assert.That(nodes[4].Identity, Is.EqualTo("$.matrix[1]"));
+            Assert.That(nodes[5].Identity, Is.EqualTo("$.matrix[1][0]"));
+            Assert.That(nodes[6].Identity, Is.EqualTo("$.matrix[1][1]"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -177,17 +201,20 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.n");
-        nodes[1].Identity.Should().Be("$.b");
-        nodes[2].Identity.Should().Be("$.s");
-        nodes[3].Identity.Should().Be("$.x");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.n"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.b"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$.s"));
+            Assert.That(nodes[3].Identity, Is.EqualTo("$.x"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -198,15 +225,18 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.emptyObj");
-        nodes[1].Identity.Should().Be("$.emptyArr");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.emptyObj"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.emptyArr"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -217,18 +247,21 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var nodes = tree.Flatten().ToArray();
+        var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        nodes[0].Identity.Should().Be("$.a");
-        nodes[1].Identity.Should().Be("$.a.b");
-        nodes[2].Identity.Should().Be("$.a.b.c");
-        nodes[3].Identity.Should().Be("$.a.b.c[0]");
-        nodes[4].Identity.Should().Be("$.a.b.c[0].d");
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.a"));
+            Assert.That(nodes[1].Identity, Is.EqualTo("$.a.b"));
+            Assert.That(nodes[2].Identity, Is.EqualTo("$.a.b.c"));
+            Assert.That(nodes[3].Identity, Is.EqualTo("$.a.b.c[0]"));
+            Assert.That(nodes[4].Identity, Is.EqualTo("$.a.b.c[0].d"));
 
-        tree.ToJsonString().Should().Be(jsonString);
+            Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+        });
     }
 
     [Test]
@@ -239,12 +272,14 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.a");
+        var node = tree.FindNode("$.a")!;
 
-        node.Should().NotBeNull();
-        node.Name.Should().Be("a");
-        node.Value.Should().Be("1");
-        node.Kind.Should().Be(JsonValueKind.Number);
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Name, Is.EqualTo("a"));
+            Assert.That(node.Value, Is.EqualTo("1"));
+            Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Number));
+        });
     }
 
     [Test]
@@ -255,11 +290,13 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.person.name");
+        var node = tree.FindNode("$.person.name")!;
 
-        node.Should().NotBeNull();
-        node.Value.Should().Be("Alice");
-        node.Kind.Should().Be(JsonValueKind.String);
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Value, Is.EqualTo("Alice"));
+            Assert.That(node.Kind, Is.EqualTo(JsonValueKind.String));
+        });
     }
 
     [Test]
@@ -270,11 +307,13 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.numbers[1]");
+        var node = tree.FindNode("$.numbers[1]")!;
 
-        node.Should().NotBeNull();
-        node.Value.Should().Be("20");
-        node.InArray.Should().BeTrue();
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Value, Is.EqualTo("20"));
+            Assert.That(node.InArray, Is.True);
+        });
     }
 
     [Test]
@@ -285,10 +324,9 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.users[1].id");
+        var node = tree.FindNode("$.users[1].id")!;
 
-        node.Should().NotBeNull();
-        node.Value.Should().Be("2");
+        Assert.That(node.Value, Is.EqualTo("2"));
     }
 
     [Test]
@@ -299,10 +337,9 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.a.b.c[0].d");
+        var node = tree.FindNode("$.a.b.c[0].d")!;
 
-        node.Should().NotBeNull();
-        node.Value.Should().Be("1");
+        Assert.That(node.Value, Is.EqualTo("1"));
     }
 
     [Test]
@@ -313,10 +350,9 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$['first name']");
+        var node = tree.FindNode("$['first name']")!;
 
-        node.Should().NotBeNull();
-        node.Value.Should().Be("Alice");
+        Assert.That(node.Value, Is.EqualTo("Alice"));
     }
 
     [Test]
@@ -329,7 +365,7 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.PERSON.name");
 
-        node.Should().BeNull();
+        Assert.That(node, Is.Null);
     }
 
     [Test]
@@ -340,10 +376,9 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.PERSON.name", StringComparison.OrdinalIgnoreCase);
+        var node = tree.FindNode("$.PERSON.name", StringComparison.OrdinalIgnoreCase)!;
 
-        node.Should().NotBeNull();
-        node.Value.Should().Be("Alice");
+        Assert.That(node.Value, Is.EqualTo("Alice"));
     }
 
     [Test]
@@ -354,11 +389,13 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.person");
+        var node = tree.FindNode("$.person")!;
 
-        node.Should().NotBeNull();
-        node.Kind.Should().Be(JsonValueKind.Object);
-        node.Children.Should().HaveCount(2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Object));
+            Assert.That(node.Children, Has.Exactly(2).Items);
+        });
     }
 
     [Test]
@@ -369,11 +406,13 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.numbers");
+        var node = tree.FindNode("$.numbers")!;
 
-        node.Should().NotBeNull();
-        node.Kind.Should().Be(JsonValueKind.Array);
-        node.Children.Should().HaveCount(3);
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Array));
+            Assert.That(node.Children, Has.Exactly(3).Items);
+        });
     }
 
     [Test]
@@ -386,7 +425,7 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.does_not_exist");
 
-        node.Should().BeNull();
+        Assert.That(node, Is.Null);
     }
 
     [Test]
@@ -399,7 +438,7 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$");
 
-        node.Should().BeNull();
+        Assert.That(node, Is.Null);
     }
 
     [Test]
@@ -412,7 +451,7 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode(string.Empty);
 
-        node.Should().BeNull();
+        Assert.That(node, Is.Null);
     }
 
     [Test]
@@ -425,7 +464,7 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.a.b.c");
 
-        node.Should().BeNull();
+        Assert.That(node, Is.Null);
     }
 
     [Test]
@@ -438,7 +477,7 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.numbers[5]");
 
-        node.Should().BeNull();
+        Assert.That(node, Is.Null);
     }
 
     [Test]
@@ -449,11 +488,13 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.n");
+        var node = tree.FindNode("$.n")!;
 
-        node.Should().NotBeNull();
-        node.Kind.Should().Be(JsonValueKind.Null);
-        node.Value.Should().BeNull();
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Null));
+            Assert.That(node.Value, Is.Null);
+        });
     }
 
     [Test]
@@ -464,10 +505,9 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.matrix[1][0]");
+        var node = tree.FindNode("$.matrix[1][0]")!;
 
-        node.Should().NotBeNull();
-        node.Value.Should().Be("3");
+        Assert.That(node.Value, Is.EqualTo("3"));
     }
 
     [Test]
@@ -478,10 +518,9 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.name");
+        var node = tree.FindNode("$.name")!;
 
-        node.Should().NotBeNull();
-        node.ToString().Should().Be("Name = name, Value = Alice, Kind = String, Identity = $.name");
+        Assert.That(node.ToString(), Is.EqualTo("Name = name, Value = Alice, Kind = String, Identity = $.name"));
     }
 
     [Test]
@@ -494,14 +533,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.a");
 
-        node.Should().NotBeNull();
+        Assert.That(node, Is.Not.Null);
         node.Kind = JsonValueKind.Undefined;
 
-        var act = () => tree.ToJsonString();
-
-        act.Should()
-            .ThrowExactly<InvalidOperationException>()
-            .WithMessage("Node '$.a' has Kind = Undefined and cannot be written.");
+        Assert.That(() => tree.ToJsonString(), Throws.TypeOf<InvalidOperationException>()
+            .With.Message.EqualTo("Node '$.a' has Kind = Undefined and cannot be written."));
     }
 
     [Test]
@@ -509,9 +545,7 @@ public class JsonTreeTests
     {
         var jsonString = BuildNestedJson(JsonTree.DefaultMaxDepth + 1);
 
-        var act = () => JsonTree.Create(jsonString);
-
-        act.Should().Throw<JsonException>();
+        Assert.Catch<JsonException>(() => JsonTree.Create(jsonString));
     }
 
     [Test]
@@ -519,9 +553,7 @@ public class JsonTreeTests
     {
         var jsonString = BuildNestedJson(JsonTree.DefaultMaxDepth);
 
-        var act = () => JsonTree.Create(jsonString);
-
-        act.Should().NotThrow();
+        Assert.That(() => JsonTree.Create(jsonString), Throws.Nothing);
     }
 
     [Test]
@@ -529,9 +561,7 @@ public class JsonTreeTests
     {
         var jsonString = BuildNestedJson(10);
 
-        var act = () => JsonTree.Create(jsonString, maxDepth: 5);
-
-        act.Should().Throw<JsonException>();
+        Assert.Catch(() => JsonTree.Create(jsonString, maxDepth: 5));
     }
 
     [Test]
@@ -546,8 +576,8 @@ public class JsonTreeTests
 
         var output = tree.ToJsonString(customOptions);
 
-        output.Should().Contain("<b>&hello</b>");
-        output.Should().NotContain("\\u003C");
+        Assert.That(output, Does.Contain("<b>&hello</b>"));
+        Assert.That(output, Does.Not.Contain("\\u003C"));
     }
 
     [Test]
@@ -562,7 +592,7 @@ public class JsonTreeTests
 
         var output = tree.ToJsonString(strictOptions);
 
-        output.Should().Contain("\\u003C");
+        Assert.That(output, Does.Contain("\\u003C"));
     }
 
     [Test]
@@ -573,12 +603,14 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$['first name']");
+        var node = tree.FindNode("$['first name']")!;
 
-        node.Should().NotBeNull();
-        node.Name.Should().Be("first name");
-        node.PathSegment.Should().Be("['first name']");
-        node.Identity.Should().Be("$['first name']");
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Name, Is.EqualTo("first name"));
+            Assert.That(node.PathSegment, Is.EqualTo("['first name']"));
+            Assert.That(node.Identity, Is.EqualTo("$['first name']"));
+        });
     }
 
     [Test]
@@ -589,12 +621,14 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.numbers[1]");
+        var node = tree.FindNode("$.numbers[1]")!;
 
-        node.Should().NotBeNull();
-        node.Name.Should().Be("1");
-        node.PathSegment.Should().Be("[1]");
-        node.Identity.Should().Be("$.numbers[1]");
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Name, Is.EqualTo("1"));
+            Assert.That(node.PathSegment, Is.EqualTo("[1]"));
+            Assert.That(node.Identity, Is.EqualTo("$.numbers[1]"));
+        });
     }
 
     [Test]
@@ -605,11 +639,13 @@ public class JsonTreeTests
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$.name");
+        var node = tree.FindNode("$.name")!;
 
-        node.Should().NotBeNull();
-        node.Name.Should().Be("name");
-        node.PathSegment.Should().Be("name");
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Name, Is.EqualTo("name"));
+            Assert.That(node.PathSegment, Is.EqualTo("name"));
+        });
     }
 
     private static string BuildNestedJson(int depth)
