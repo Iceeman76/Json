@@ -73,6 +73,14 @@ public sealed partial class JsonTree
                 {
                     sb.Append(':');
                 }
+                else if (Kind is JsonValueKind.Object)
+                {
+                    sb.Append(" = {}");
+                }
+                else if (Kind is JsonValueKind.Array)
+                {
+                    sb.Append(" = []");
+                }
                 else
                 {
                     sb.Append(" = ").Append(Value ?? "null");

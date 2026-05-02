@@ -58,18 +58,10 @@ public sealed partial class JsonTree
 
     private void TraverseObject(JsonElement element, Node parent)
     {
-        var hasProperties = false;
-
         foreach (var property in element.EnumerateObject())
         {
-            hasProperties = true;
             var node = parent.AddNode(property.Name, isArrayIndex: false);
             DoTraverse(property.Value, node);
-        }
-
-        if (hasProperties == false)
-        {
-            parent.Value = "{}";
         }
     }
 
@@ -83,11 +75,6 @@ public sealed partial class JsonTree
             node.InArray = true;
             DoTraverse(item, node);
             index++;
-        }
-
-        if (index == 0)
-        {
-            parent.Value = "[]";
         }
     }
 
