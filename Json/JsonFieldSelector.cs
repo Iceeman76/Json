@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -41,15 +42,13 @@ public sealed partial record JsonFieldSelector
 
         var node = _tree.FindNode(pathExpression, StringComparison.OrdinalIgnoreCase)!;
 
-        using var stream = new MemoryStream();
-        using var writer = new Utf8JsonWriter(stream, _options);
+        var buffer = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(buffer, _options);
 
         writer.WriteSubTree(node);
         writer.Flush();
 
-        var jsonString = Encoding.UTF8.GetString(stream.ToArray());
-
-        return jsonString;
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
     private string SelectWildcard(string pathExpression)
@@ -61,8 +60,8 @@ public sealed partial record JsonFieldSelector
         var matchedNodes = _tree.Flatten().Where(node => Regex.IsMatch(node.Identity, pattern, RegexOptions.IgnoreCase));
         var wrapInArray = pathExpression.Contains("[*]");
 
-        using var stream = new MemoryStream();
-        using var writer = new Utf8JsonWriter(stream, _options);
+        var buffer = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(buffer, _options);
 
         if (wrapInArray) writer.WriteStartArray();
 
@@ -75,9 +74,7 @@ public sealed partial record JsonFieldSelector
 
         writer.Flush();
 
-        var jsonString = Encoding.UTF8.GetString(stream.ToArray());
-
-        return jsonString;
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
     private string SelectProjection(string pathExpression, Match projectionMatch)
@@ -85,8 +82,8 @@ public sealed partial record JsonFieldSelector
         var fields = projectionMatch.Groups[1].Value.Split(',');
         var basePath = pathExpression[..^projectionMatch.Value.Length];
 
-        using var stream = new MemoryStream();
-        using var writer = new Utf8JsonWriter(stream, _options);
+        var buffer = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(buffer, _options);
 
         if (basePath.Contains("[*]"))
         {
@@ -109,9 +106,7 @@ public sealed partial record JsonFieldSelector
 
         writer.Flush();
 
-        var jsonString = Encoding.UTF8.GetString(stream.ToArray());
-
-        return jsonString;
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
     private void WriteProjectionAsObject(Utf8JsonWriter writer, string basePath, string[] fields)

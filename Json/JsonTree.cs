@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Buffers;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
@@ -8,6 +9,8 @@ public sealed partial class JsonTree
 {
     private readonly Node _rootNode;
     private Node[]? _flattened;
+    private Dictionary<string, Node>? _index;
+    private Dictionary<string, Node>? _indexIgnoreCase;
 
     private JsonTree(Node rootNode)
     {
@@ -31,7 +34,14 @@ public sealed partial class JsonTree
 
     public Node? FindNode(string identity, StringComparison comparison = StringComparison.Ordinal)
     {
-        return Flatten().FirstOrDefault(x => x.Identity.Equals(identity, comparison));
+        if (comparison is StringComparison.OrdinalIgnoreCase)
+        {
+            _indexIgnoreCase ??= Flatten().ToDictionary(x => x.Identity, StringComparer.OrdinalIgnoreCase);
+            return _indexIgnoreCase.GetValueOrDefault(identity);
+        }
+
+        _index ??= Flatten().ToDictionary(x => x.Identity, StringComparer.Ordinal);
+        return _index.GetValueOrDefault(identity);
     }
 
     private void DoTraverse(JsonElement element, Node node)
@@ -85,8 +95,8 @@ public sealed partial class JsonTree
             options = options with { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
         }
 
-        using var stream = new MemoryStream();
-        using var writer = new Utf8JsonWriter(stream, options);
+        var buffer = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(buffer, options);
 
         writer.WriteStartNode(_rootNode);
 
@@ -98,7 +108,7 @@ public sealed partial class JsonTree
         writer.WriteEndNode(_rootNode);
         writer.Flush();
 
-        return Encoding.UTF8.GetString(stream.ToArray());
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
     public Node[] Flatten() => _flattened ??= _rootNode.Flatten().ToArray();

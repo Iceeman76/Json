@@ -121,7 +121,7 @@ public sealed partial class JsonTree
             return $"Name = {Name}, Value = {Value}, Kind = {Kind}, Identity = {Identity}";
         }
 
-        [GeneratedRegex(@"^[A-Za-z_\$][A-Za-z0-9_\$]*$", RegexOptions.Compiled)]
+        [GeneratedRegex(@"^[A-Za-z_\$][A-Za-z0-9_\$]*$")]
         private static partial Regex JavaScriptIdentifierRegex();
     }
 }
