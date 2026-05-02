@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using Json;
 
@@ -518,6 +519,37 @@ public class JsonTreeTests
         var act = () => JsonTree.Create(jsonString, maxDepth: 5);
 
         act.Should().Throw<JsonException>();
+    }
+
+    [Test]
+    public void ToJsonString_applies_relaxed_encoder_when_options_lack_one()
+    {
+        const string jsonString = """
+                                  {"html":"<b>&hello</b>"}
+                                  """;
+
+        var tree = JsonTree.Create(jsonString);
+        var customOptions = new JsonWriterOptions { Indented = false };
+
+        var output = tree.ToJsonString(customOptions);
+
+        output.Should().Contain("<b>&hello</b>");
+        output.Should().NotContain("\\u003C");
+    }
+
+    [Test]
+    public void ToJsonString_respects_explicit_encoder_in_options()
+    {
+        const string jsonString = """
+                                  {"html":"<b>"}
+                                  """;
+
+        var tree = JsonTree.Create(jsonString);
+        var strictOptions = new JsonWriterOptions { Encoder = JavaScriptEncoder.Default };
+
+        var output = tree.ToJsonString(strictOptions);
+
+        output.Should().Contain("\\u003C");
     }
 
     [Test]

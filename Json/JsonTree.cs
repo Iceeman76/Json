@@ -9,12 +9,6 @@ public partial record JsonTree
     private readonly Node _rootNode;
     private Node[]? _flattened;
 
-    private readonly JsonWriterOptions _defaultOptions = new()
-    {
-        Indented = false,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
-
     private JsonTree(Node rootNode)
     {
         _rootNode = rootNode;
@@ -97,10 +91,13 @@ public partial record JsonTree
         }
     }
 
-    public string ToJsonString() => ToJsonString(_defaultOptions);
-
-    public string ToJsonString(JsonWriterOptions options)
+    public string ToJsonString(JsonWriterOptions options = default)
     {
+        if (options.Encoder is null)
+        {
+            options = options with { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+        }
+
         using var stream = new MemoryStream();
         using var writer = new Utf8JsonWriter(stream, options);
 
