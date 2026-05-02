@@ -429,16 +429,25 @@ public class JsonTreeTests
     }
 
     [Test]
-    public void FindNode_returns_null_for_root_identity()
+    public void FindNode_returns_root_node_for_root_identity()
     {
         const string jsonString = """
                                   {"a":1}
                                   """;
 
         var tree = JsonTree.Create(jsonString);
-        var node = tree.FindNode("$");
+        var node = tree.FindNode("$")!;
+        var nodes = node.Flatten().ToArray();
 
-        Assert.That(node, Is.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(node.Identity, Is.EqualTo("$"));
+            Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Object));
+
+            Assert.That(nodes[0].Identity, Is.EqualTo("$.a"));
+            Assert.That(nodes[0].Value, Is.EqualTo("1"));
+            Assert.That(nodes[0].Kind, Is.EqualTo(JsonValueKind.Number));
+        });
     }
 
     [Test]

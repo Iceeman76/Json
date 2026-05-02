@@ -34,6 +34,11 @@ public sealed partial class JsonTree
 
     public Node? FindNode(string identity, StringComparison comparison = StringComparison.Ordinal)
     {
+        if (_rootNode.Identity.Equals(identity, comparison))
+        {
+            return _rootNode;
+        }
+
         if (comparison is StringComparison.OrdinalIgnoreCase)
         {
             _indexIgnoreCase ??= Flatten().ToDictionary(x => x.Identity, StringComparer.OrdinalIgnoreCase);
