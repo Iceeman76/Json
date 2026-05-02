@@ -9,6 +9,7 @@ public partial record JsonTree
     public sealed partial class Node(string name = "")
     {
         public string Name { get; } = name;
+        public string Identity { get; private init; } = name;
         public string? Value { get; set; }
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
@@ -18,11 +19,6 @@ public partial record JsonTree
 
         private Node? _parent;
         private readonly List<Node> _children = [];
-        private string? _identity;
-
-        public string Identity => _identity ??= string.IsNullOrEmpty(_parent?.Identity)
-            ? Name
-            : $"{_parent.Identity}.{Name}".Replace(".[", "[");
 
         private static readonly Regex IdentifierRegex = JavaScriptIdentifierRegex();
 
@@ -33,7 +29,16 @@ public partial record JsonTree
                 name = $"['{name}']";
             }
 
-            var node = new Node(name) { _parent = this };
+            var identity = string.IsNullOrEmpty(Identity)
+                ? name
+                : $"{Identity}.{name}".Replace(".[", "[");
+
+            var node = new Node(name)
+            {
+                _parent = this,
+                Identity = identity
+            };
+
             _children.Add(node);
 
             return node;
