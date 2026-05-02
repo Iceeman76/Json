@@ -66,8 +66,7 @@ public sealed partial class JsonTree
             }
             else
             {
-                var indent = new string(' ', depth * 4);
-                sb.Append(indent).Append(Identity);
+                sb.Append(' ', depth * 4).Append(Identity);
 
                 if (HasChildren)
                 {
