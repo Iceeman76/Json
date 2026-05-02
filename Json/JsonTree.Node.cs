@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Json;
 
-public partial record JsonTree
+public sealed partial class JsonTree
 {
     public sealed partial class Node(string name = "")
     {

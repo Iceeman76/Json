@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Json;
 
-public partial record JsonTree
+public sealed partial class JsonTree
 {
     private readonly Node _rootNode;
     private Node[]? _flattened;
