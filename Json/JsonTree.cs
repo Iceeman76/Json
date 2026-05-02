@@ -64,38 +64,36 @@ public partial record JsonTree
 
     private void TraverseObject(JsonElement element, Node parent)
     {
-        var properties = element.EnumerateObject().ToArray();
+        var hasProperties = false;
 
-        if (properties.Length == 0)
+        foreach (var property in element.EnumerateObject())
+        {
+            hasProperties = true;
+            var node = parent.AddNode(property.Name, isArrayIndex: false);
+            DoTraverse(property.Value, node);
+        }
+
+        if (hasProperties == false)
         {
             parent.Value = "{}";
-        }
-        else
-        {
-            foreach (var property in properties)
-            {
-                var node = parent.AddNode(property.Name, isArrayIndex: false);
-                DoTraverse(property.Value, node);
-            }
         }
     }
 
     private void TraverseArray(JsonElement element, Node parent)
     {
-        var items = element.EnumerateArray().ToArray();
+        var index = 0;
 
-        if (items.Length == 0)
+        foreach (var item in element.EnumerateArray())
+        {
+            var node = parent.AddNode($"[{index}]", isArrayIndex: true);
+            node.InArray = true;
+            DoTraverse(item, node);
+            index++;
+        }
+
+        if (index == 0)
         {
             parent.Value = "[]";
-        }
-        else
-        {
-            for (var i = 0; i < items.Length; i++)
-            {
-                var node = parent.AddNode($"[{i}]", isArrayIndex: true);
-                node.InArray = true;
-                DoTraverse(items[i], node);
-            }
         }
     }
 
