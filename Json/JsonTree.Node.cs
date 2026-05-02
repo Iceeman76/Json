@@ -27,7 +27,9 @@ public sealed partial class JsonTree
         {
             var pathSegment = isArrayIndex
                 ? $"[{name}]"
-                : IdentifierRegex.IsMatch(name) ? name : $"['{name}']";
+                : IdentifierRegex.IsMatch(name)
+                    ? name
+                    : $"['{name}']";
 
             var identity = string.IsNullOrEmpty(Identity)
                 ? pathSegment
@@ -45,16 +47,25 @@ public sealed partial class JsonTree
             return node;
         }
 
-        public IEnumerable<Node> Flatten()
+        public Node[] Flatten()
         {
-            if (_parent is not null) yield return this;
+            var result = new List<Node>();
 
-            foreach (var child in Children)
+            CollectNodes(result);
+
+            return result.ToArray();
+        }
+
+        private void CollectNodes(List<Node> result)
+        {
+            if (_parent is not null)
             {
-                foreach (var descendant in child.Flatten())
-                {
-                    yield return descendant;
-                }
+                result.Add(this);
+            }
+
+            foreach (var child in _children)
+            {
+                child.CollectNodes(result);
             }
         }
 

@@ -437,7 +437,7 @@ public class JsonTreeTests
 
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$")!;
-        var nodes = node.Flatten().ToArray();
+        var nodes = node.Flatten();
 
         Assert.Multiple(() =>
         {

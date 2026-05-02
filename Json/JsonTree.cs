@@ -116,7 +116,7 @@ public sealed partial class JsonTree
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    public Node[] Flatten() => _flattened ??= _rootNode.Flatten().ToArray();
+    public Node[] Flatten() => _flattened ??= _rootNode.Flatten();
 
     public override string ToString() => _rootNode.BuildBranchString();
 }
