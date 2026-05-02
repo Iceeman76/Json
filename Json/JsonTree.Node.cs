@@ -6,8 +6,9 @@ namespace Json;
 
 public partial record JsonTree
 {
-    public sealed partial record Node(string Name = "")
+    public sealed partial class Node(string name = "")
     {
+        public string Name { get; } = name;
         public string? Value { get; set; }
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
@@ -83,7 +84,7 @@ public partial record JsonTree
 
         internal void BuildRecursiveJson(Utf8JsonWriter writer)
         {
-            writer.WriteNode(this);
+            writer.WriteNode(this, InArray);
 
             foreach (var node in _children)
             {
