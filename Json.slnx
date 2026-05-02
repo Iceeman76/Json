@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Json/Json.csproj" />
+  <Project Path="JsonTests/JsonTests.csproj" />
+</Solution>
