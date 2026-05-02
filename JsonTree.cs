@@ -22,7 +22,7 @@ public partial record JsonTree
 
     public static JsonTree Create(string jsonString, string rootName = "$")
     {
-        var doc = JsonDocument.Parse(jsonString);
+        using var doc = JsonDocument.Parse(jsonString);
         var rootNode = new Node(rootName);
         var tree = new JsonTree(rootNode);
 
