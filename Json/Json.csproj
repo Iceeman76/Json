@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include=".aiassistant\rules\csharp-coding-rules.md" />
+        <Content Include=".aiassistant\rules\csharp-coding-rules.md"/>
     </ItemGroup>
 
 </Project>
