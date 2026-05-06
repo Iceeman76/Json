@@ -1,10 +1,10 @@
 namespace Benchmarks;
 
 [MemoryDiagnoser]
-[SimpleJob]
+[SimpleJob(warmupCount: 5, iterationCount: 10)]
 public class JsonTreeBenchmarks
 {
-    private string _jsonString = string.Empty;
+    private string _jsonString = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -13,5 +13,5 @@ public class JsonTreeBenchmarks
     }
 
     [Benchmark]
-    public JsonTree Create() => JsonTree.Create(_jsonString);
+    public JsonTree CreateTree() => JsonTree.Create(_jsonString);
 }
