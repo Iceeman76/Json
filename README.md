@@ -10,8 +10,8 @@ Parses a JSON string into an in-memory tree where each node has a full identity 
 var tree = JsonTree.Create("""{"person":{"name":"Alice","age":30}}""");
 
 var node = tree.FindNode("$.person.name");
-// node.Value   → "Alice"
-// node.Kind    → JsonValueKind.String
+// node.Value    → "Alice"
+// node.Kind     → JsonValueKind.String
 // node.Identity → "$.person.name"
 
 var nodes = tree.Flatten();        // all nodes as a flat array
