@@ -17,11 +17,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var nodes = tree.Flatten();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes, Has.Length.EqualTo(564));
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -37,13 +37,13 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.a"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.b"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -59,14 +59,14 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.person"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.person.name"));
             Assert.That(nodes[2].Identity, Is.EqualTo("$.person.age"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -82,7 +82,7 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.numbers"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.numbers[0]"));
@@ -90,7 +90,7 @@ public class JsonTreeTests
             Assert.That(nodes[3].Identity, Is.EqualTo("$.numbers[2]"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -106,7 +106,7 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.users"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.users[0]"));
@@ -115,7 +115,7 @@ public class JsonTreeTests
             Assert.That(nodes[4].Identity, Is.EqualTo("$.users[1].id"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -131,7 +131,7 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.mixed"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.mixed[0]"));
@@ -140,7 +140,7 @@ public class JsonTreeTests
             Assert.That(nodes[4].Identity, Is.EqualTo("$.mixed[2].three"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -156,14 +156,14 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$['first name']"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$['123key']"));
             Assert.That(nodes[2].Identity, Is.EqualTo("$['key.with.dot']"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -179,7 +179,7 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.matrix"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.matrix[0]"));
@@ -190,7 +190,7 @@ public class JsonTreeTests
             Assert.That(nodes[6].Identity, Is.EqualTo("$.matrix[1][1]"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -206,7 +206,7 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.n"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.b"));
@@ -214,7 +214,7 @@ public class JsonTreeTests
             Assert.That(nodes[3].Identity, Is.EqualTo("$.x"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -230,13 +230,13 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.emptyObj"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.emptyArr"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -252,7 +252,7 @@ public class JsonTreeTests
         TestContext.Progress.WriteLine(tree);
         TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].Identity, Is.EqualTo("$.a"));
             Assert.That(nodes[1].Identity, Is.EqualTo("$.a.b"));
@@ -261,7 +261,7 @@ public class JsonTreeTests
             Assert.That(nodes[4].Identity, Is.EqualTo("$.a.b.c[0].d"));
 
             Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
-        });
+        }
     }
 
     [Test]
@@ -274,12 +274,12 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.a")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Name, Is.EqualTo("a"));
             Assert.That(node.Value, Is.EqualTo("1"));
             Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Number));
-        });
+        }
     }
 
     [Test]
@@ -292,11 +292,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.person.name")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Value, Is.EqualTo("Alice"));
             Assert.That(node.Kind, Is.EqualTo(JsonValueKind.String));
-        });
+        }
     }
 
     [Test]
@@ -309,11 +309,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.numbers[1]")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Value, Is.EqualTo("20"));
             Assert.That(node.InArray, Is.True);
-        });
+        }
     }
 
     [Test]
@@ -378,11 +378,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.person")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Object));
             Assert.That(node.Children, Has.Exactly(2).Items);
-        });
+        }
     }
 
     [Test]
@@ -395,11 +395,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.numbers")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Array));
             Assert.That(node.Children, Has.Exactly(3).Items);
-        });
+        }
     }
 
     [Test]
@@ -426,7 +426,7 @@ public class JsonTreeTests
         var node = tree.FindNode("$")!;
         var nodes = node.Flatten();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Identity, Is.EqualTo("$"));
             Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Object));
@@ -434,7 +434,7 @@ public class JsonTreeTests
             Assert.That(nodes[0].Identity, Is.EqualTo("$.a"));
             Assert.That(nodes[0].Value, Is.EqualTo("1"));
             Assert.That(nodes[0].Kind, Is.EqualTo(JsonValueKind.Number));
-        });
+        }
     }
 
     [Test]
@@ -486,11 +486,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.n")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Kind, Is.EqualTo(JsonValueKind.Null));
             Assert.That(node.Value, Is.Null);
-        });
+        }
     }
 
     [Test]
@@ -601,12 +601,12 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$['first name']")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Name, Is.EqualTo("first name"));
             Assert.That(node.PathSegment, Is.EqualTo("['first name']"));
             Assert.That(node.Identity, Is.EqualTo("$['first name']"));
-        });
+        }
     }
 
     [Test]
@@ -619,12 +619,12 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.numbers[1]")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Name, Is.EqualTo("1"));
             Assert.That(node.PathSegment, Is.EqualTo("[1]"));
             Assert.That(node.Identity, Is.EqualTo("$.numbers[1]"));
-        });
+        }
     }
 
     [Test]
@@ -637,11 +637,11 @@ public class JsonTreeTests
         var tree = JsonTree.Create(jsonString);
         var node = tree.FindNode("$.name")!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(node.Name, Is.EqualTo("name"));
             Assert.That(node.PathSegment, Is.EqualTo("name"));
-        });
+        }
     }
 
     private static string BuildNestedJson(int depth)
