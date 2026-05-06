@@ -40,7 +40,7 @@ public sealed partial record JsonFieldSelector
             return SelectWildcard(pathExpression);
         }
 
-        var node = _tree.FindNode(pathExpression, StringComparison.OrdinalIgnoreCase)!;
+        var node = _tree.FindNode(pathExpression)!;
 
         var buffer = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(buffer, _options);
@@ -116,7 +116,7 @@ public sealed partial record JsonFieldSelector
         foreach (var field in fields)
         {
             var identity = $"{basePath}.{field}";
-            var node = _tree.FindNode(identity, StringComparison.OrdinalIgnoreCase);
+            var node = _tree.FindNode(identity);
 
             node?.BuildRecursiveJson(writer);
         }

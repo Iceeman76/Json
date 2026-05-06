@@ -26,7 +26,7 @@ $.matrix[0][1]    →  array indices
 $['first name']   →  key that is not a valid identifier
 ```
 
-`FindNode` accepts an identity path and returns the matching node, or `null` if not found. Lookup is case-sensitive by default.
+`FindNode` accepts an identity path and returns the matching node, or `null` if not found. Lookup is case-insensitive.
 
 ## JsonFieldSelector
 

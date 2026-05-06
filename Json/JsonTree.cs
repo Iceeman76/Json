@@ -10,7 +10,6 @@ public sealed partial class JsonTree
     private readonly Node _rootNode;
     private Node[]? _flattened;
     private Dictionary<string, Node>? _index;
-    private Dictionary<string, Node>? _indexIgnoreCase;
 
     private JsonTree(Node rootNode)
     {
@@ -32,20 +31,14 @@ public sealed partial class JsonTree
         return tree;
     }
 
-    public Node? FindNode(string identity, StringComparison comparison = StringComparison.Ordinal)
+    public Node? FindNode(string identity)
     {
-        if (_rootNode.Identity.Equals(identity, comparison))
+        if (_rootNode.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase))
         {
             return _rootNode;
         }
 
-        if (comparison is StringComparison.OrdinalIgnoreCase)
-        {
-            _indexIgnoreCase ??= Flatten().ToDictionary(x => x.Identity, StringComparer.OrdinalIgnoreCase);
-            return _indexIgnoreCase.GetValueOrDefault(identity);
-        }
-
-        _index ??= Flatten().ToDictionary(x => x.Identity, StringComparer.Ordinal);
+        _index ??= Flatten().ToDictionary(x => x.Identity, StringComparer.OrdinalIgnoreCase);
         return _index.GetValueOrDefault(identity);
     }
 
