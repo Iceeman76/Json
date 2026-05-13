@@ -17,7 +17,7 @@ public sealed partial class JsonTree
         private bool HasChildren => _children.Count > 0;
 
         private Node? _parent;
-        private readonly List<Node> _children = [];
+        private readonly List<Node> _children = new(64);
 
         internal Node AddNode(string name, bool isArrayIndex)
         {
