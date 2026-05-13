@@ -1,13 +1,13 @@
 namespace Benchmarks;
 
 [MemoryDiagnoser]
-[SimpleJob(warmupCount: 5, iterationCount: 10)]
+[SimpleJob(warmupCount: 5, iterationCount: 20)]
 public class JsonTreeBenchmarks
 {
     private string _jsonString = null!;
 
     [Params("v1", "v2")]
-    private string Version { get; set; } = null!;
+    public string Version { get; set; } = null!;
 
     [GlobalSetup]
     public void GlobalSetup()

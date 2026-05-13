@@ -109,7 +109,7 @@ public sealed partial class JsonTree : IJsonTree
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    public IJsonTreeNode[] Flatten() => _flattened ??= _rootNode.Flatten().Cast<IJsonTreeNode>().ToArray();
+    public IJsonTreeNode[] Flatten() => _flattened ??= _rootNode.Flatten().ToArray();
 
     public override string ToString() => _rootNode.BuildBranchString();
 }
