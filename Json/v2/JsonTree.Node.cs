@@ -1,12 +1,10 @@
 ﻿using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-
 namespace Json.v2;
 
 public sealed partial class JsonTree
 {
-    public sealed partial class Node(string name = "") : IJsonTreeNode
+    public sealed class Node(string name = "") : IJsonTreeNode
     {
         public string Name { get; } = name;
         public string PathSegment { get; private init; } = name;
@@ -21,19 +19,19 @@ public sealed partial class JsonTree
         private Node? _parent;
         private readonly List<Node> _children = [];
 
-        private static readonly Regex IdentifierRegex = JavaScriptIdentifierRegex();
-
         internal Node AddNode(string name, bool isArrayIndex)
         {
             var pathSegment = isArrayIndex
                 ? $"[{name}]"
-                : IdentifierRegex.IsMatch(name)
+                : IsJavaScriptIdentifier(name)
                     ? name
                     : $"['{name}']";
 
             var identity = string.IsNullOrEmpty(Identity)
                 ? pathSegment
-                : $"{Identity}.{pathSegment}".Replace(".[", "[");
+                : pathSegment[0] == '['
+                    ? $"{Identity}{pathSegment}"
+                    : $"{Identity}.{pathSegment}";
 
             var node = new Node(name)
             {
@@ -45,6 +43,33 @@ public sealed partial class JsonTree
             _children.Add(node);
 
             return node;
+        }
+
+        private static bool IsJavaScriptIdentifier(string name)
+        {
+            if (name.Length == 0)
+            {
+                return false;
+            }
+
+            var first = name[0];
+            
+            if (!(char.IsLetter(first) || first == '_' || first == '$'))
+            {
+                return false;
+            }
+
+            for (var i = 1; i < name.Length; i++)
+            {
+                var c = name[i];
+                
+                if (!(char.IsLetterOrDigit(c) || c == '_' || c == '$'))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public IJsonTreeNode[] Flatten()
@@ -131,8 +156,5 @@ public sealed partial class JsonTree
         {
             return $"Name = {Name}, Value = {Value}, Kind = {Kind}, Identity = {Identity}";
         }
-
-        [GeneratedRegex(@"^[A-Za-z_\$][A-Za-z0-9_\$]*$")]
-        private static partial Regex JavaScriptIdentifierRegex();
     }
 }
