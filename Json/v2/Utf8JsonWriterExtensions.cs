@@ -5,25 +5,32 @@ namespace Json.v2;
 
 internal static class Utf8JsonWriterExtensions
 {
-    private static readonly Dictionary<JsonValueKind, Action<Utf8JsonWriter, IJsonTreeNode, bool>> MethodRouter = new()
-    {
-        { JsonValueKind.Null, WriteNullNode },
-        { JsonValueKind.True, WriteBooleanNode },
-        { JsonValueKind.String, WriteStringNode },
-        { JsonValueKind.Number, WriteNumberNode },
-        { JsonValueKind.False, WriteBooleanNode },
-        { JsonValueKind.Array, WriteStartArrayNode },
-        { JsonValueKind.Object, WriteStartObjectNode }
-    };
-
     public static void WriteNode(this Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        if (node.Kind is JsonValueKind.Undefined)
+        switch (node.Kind)
         {
-            throw new InvalidOperationException($"Node '{node.Identity}' has Kind = Undefined and cannot be written.");
+            case JsonValueKind.Null:
+                WriteNullNode(writer, node, inArray);
+                break;
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                WriteBooleanNode(writer, node, inArray);
+                break;
+            case JsonValueKind.String:
+                WriteStringNode(writer, node, inArray);
+                break;
+            case JsonValueKind.Number:
+                WriteNumberNode(writer, node, inArray);
+                break;
+            case JsonValueKind.Array:
+                WriteStartArrayNode(writer, node, inArray);
+                break;
+            case JsonValueKind.Object:
+                WriteStartObjectNode(writer, node, inArray);
+                break;
+            default:
+                throw new InvalidOperationException($"Node '{node.Identity}' has Kind = {node.Kind} and cannot be written.");
         }
-
-        MethodRouter[node.Kind].Invoke(writer, node, inArray);
     }
 
     private static void WriteNumberNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
