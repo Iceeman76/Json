@@ -1,25 +1,20 @@
 using System.Text;
-using Json;
+using System.Text.Json;
+using Json.v2;
 
 namespace JsonTests;
 
-[TestFixtureSource(nameof(Versions))]
-public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
+public class JsonFieldSelectorTests
 {
-    private static IEnumerable<Func<string, IJsonFieldSelector>> Versions()
-    {
-        yield return json => new Json.v1.JsonFieldSelector(json);
-        yield return json => new Json.v2.JsonFieldSelector(json);
-    }
-
     [Test]
     public void Large_json()
     {
         var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.draw.events[*][eventNumber,description]");
+        var tree = JsonTree.Create(result);
 
-        Console.WriteLine(result);
+        TestContext.Progress.WriteLine(tree.ToJsonString(new JsonWriterOptions { Indented = true }));
     }
 
     [Test]
@@ -29,7 +24,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
                                   {"person":{"name":"Alice","age":30}}
                                   """;
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$");
 
         Assert.That(result, Is.EqualTo(jsonString));
@@ -42,7 +37,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
                                   {"person":{"name":"Alice","age":30}}
                                   """;
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.person");
 
         const string expected = """
@@ -59,7 +54,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
                                   {"person":{"name":"Alice","age":30}}
                                   """;
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.person.age");
 
         const string expected = "30";
@@ -74,7 +69,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
                                   {"crew":{"members":[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]}}
                                   """;
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.crew.members[*].name");
 
         const string expected = """["Allan","Bertil"]""";
@@ -89,7 +84,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
                                   {"crew":{"members":[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]}}
                                   """;
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.crew.*");
 
         const string expected = """[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]""";
@@ -104,7 +99,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
                                   {"departments":[{"name":"Engineering","members":[{"name":"Alice"},{"name":"Bob"}]},{"name":"Marketing","members":[{"name":"Charlie"},{"name":"Dave"}]}]}
                                   """;
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.departments[*].members[*].name");
 
         const string expected = """["Alice","Bob","Charlie","Dave"]""";
@@ -117,7 +112,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
     {
         const string jsonString = """{"person":{"name":"Alice","age":30,"ssn":"secret"}}""";
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.person[name,age]");
 
         const string expected = """{"name":"Alice","age":30}""";
@@ -130,7 +125,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
     {
         const string jsonString = """{"name":"Alice","age":30,"ssn":"secret"}""";
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$[name,age]");
 
         const string expected = """{"name":"Alice","age":30}""";
@@ -143,7 +138,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
     {
         const string jsonString = """{"store":{"book":[{"title":"Sayings of the Century","price":8.95},{"title":"Sword of Honour","price":12.99},{"title":"Moby Dick","price":8.99},{"title":"The Lord of the Rings","price":22.99}]}}""";
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.store.book[*][title,price]");
 
         const string expected = """[{"title":"Sayings of the Century","price":8.95},{"title":"Sword of Honour","price":12.99},{"title":"Moby Dick","price":8.99},{"title":"The Lord of the Rings","price":22.99}]""";
@@ -158,7 +153,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
                                   {"crew":[{"id":1,"name":"Allan","age":50},{"id":2,"name":"Bertil","age":75}]}
                                   """;
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.crew[*][id,name]");
 
         const string expected = """[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]""";
@@ -171,7 +166,7 @@ public class JsonFieldSelectorTests(Func<string, IJsonFieldSelector> arg)
     {
         const string jsonString = """{"name":"Alice","age":30,"ssn":"secret"}""";
 
-        var selector = arg(jsonString);
+        var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$[NAME,AGE]");
 
         const string expected = """{"name":"Alice","age":30}""";
