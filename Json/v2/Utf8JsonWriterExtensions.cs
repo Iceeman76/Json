@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace Json.v2;
@@ -35,17 +36,15 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteNumberNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        var element = node.Element!.Value;
-
-        if (element.TryGetInt64(out var longValue))
+        if (long.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var longValue))
         {
             WriteLongNode(writer, node, inArray, longValue);
         }
-        else if (element.TryGetDecimal(out var decimalValue))
+        else if (decimal.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var decimalValue))
         {
             WriteDecimalNode(writer, node, inArray, decimalValue);
         }
-        else if (element.TryGetDouble(out var doubleValue))
+        else if (double.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var doubleValue))
         {
             WriteDoubleNode(writer, node, inArray, doubleValue);
         }
@@ -93,7 +92,7 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteStringNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        var value = node.Element?.GetString() ?? node.Value;
+        var value = node.Value;
 
         if (inArray)
         {
@@ -119,7 +118,7 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteBooleanNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        var value = node.Element?.GetBoolean() ?? Convert.ToBoolean(node.Value);
+        var value = Convert.ToBoolean(node.Value);
 
         if (inArray)
         {

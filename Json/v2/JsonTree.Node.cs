@@ -8,15 +8,9 @@ public sealed partial class JsonTree
     public sealed class Node(string name = "") : IJsonTreeNode
     {
         public string Name { get; } = name;
-        public JsonElement? Element { get; set; }
         public string PathSegment { get; private init; } = name;
         public string Identity => _identity ??= BuildIdentity();
-
-        public string? Value
-        {
-            get => Element?.ToString();
-            set => Element = value is null ? null : ParseToElement(value);
-        }
+        public string? Value { get; set; }
 
         private string? _identity;
         public JsonValueKind Kind { get; set; }
@@ -26,7 +20,7 @@ public sealed partial class JsonTree
         private bool HasChildren => _children.Count > 0;
 
         private Node? _parent;
-        private readonly List<Node> _children = new(64);
+        private readonly List<Node> _children = [];
 
         internal Node AddNode(string name, bool isArrayIndex)
         {
@@ -180,13 +174,6 @@ public sealed partial class JsonTree
             BuildRecursiveString(sb);
 
             return sb.ToString().TrimEnd();
-        }
-
-        private static JsonElement ParseToElement(string value)
-        {
-            var doc = JsonDocument.Parse($"\"{value}\"");
-
-            return doc.RootElement.Clone();
         }
 
         public override string ToString()

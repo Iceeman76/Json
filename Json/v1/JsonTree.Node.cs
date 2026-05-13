@@ -12,7 +12,6 @@ public sealed partial class JsonTree
         public string PathSegment { get; private init; } = name;
         public string Identity { get; private init; } = name;
         public string? Value { get; set; }
-        public JsonElement? Element { get; set; }
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
         public IReadOnlyList<IJsonTreeNode> Children => _children;

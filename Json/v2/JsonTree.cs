@@ -54,10 +54,10 @@ public sealed partial class JsonTree : IJsonTree
                 TraverseArray(element, node);
                 break;
             case JsonValueKind.Null:
-                node.Element = null;
+                node.Value = null;
                 break;
             default:
-                node.Element = element.Clone();
+                node.Value = element.ToString();
                 break;
         }
     }
