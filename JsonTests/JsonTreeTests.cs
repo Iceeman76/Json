@@ -5,7 +5,7 @@ using Json;
 
 namespace JsonTests;
 
-public delegate IJsonTree CreateTreeDelegate(string json, string rootName = "$", int maxDepth = 64);
+public delegate IJsonTree CreateTreeDelegate(string json, int maxDepth = 64);
 
 [TestFixtureSource(nameof(Versions))]
 public class JsonTreeTests(CreateTreeDelegate createTree)
@@ -547,7 +547,7 @@ public class JsonTreeTests(CreateTreeDelegate createTree)
     [Test]
     public void Create_throws_when_json_exceeds_default_max_depth()
     {
-        var jsonString = BuildNestedJson(Json.v1.JsonTree.DefaultMaxDepth + 1);
+        var jsonString = BuildNestedJson(65);
 
         Assert.Catch<JsonException>(() => createTree(jsonString));
     }
@@ -555,7 +555,7 @@ public class JsonTreeTests(CreateTreeDelegate createTree)
     [Test]
     public void Create_accepts_json_at_default_max_depth()
     {
-        var jsonString = BuildNestedJson(Json.v1.JsonTree.DefaultMaxDepth);
+        var jsonString = BuildNestedJson(64);
 
         Assert.That(() => createTree(jsonString), Throws.Nothing);
     }
