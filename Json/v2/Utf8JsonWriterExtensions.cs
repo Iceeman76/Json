@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 
 namespace Json.v2;
@@ -28,6 +27,7 @@ internal static class Utf8JsonWriterExtensions
             case JsonValueKind.Object:
                 WriteStartObjectNode(writer, node, inArray);
                 break;
+            case JsonValueKind.Undefined:
             default:
                 throw new InvalidOperationException($"Node '{node.Identity}' has Kind = {node.Kind} and cannot be written.");
         }
@@ -35,15 +35,17 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteNumberNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        if (long.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var longValue))
+        var element = node.Element!.Value;
+
+        if (element.TryGetInt64(out var longValue))
         {
             WriteLongNode(writer, node, inArray, longValue);
         }
-        else if (decimal.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var decimalValue))
+        else if (element.TryGetDecimal(out var decimalValue))
         {
             WriteDecimalNode(writer, node, inArray, decimalValue);
         }
-        else if (double.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var doubleValue))
+        else if (element.TryGetDouble(out var doubleValue))
         {
             WriteDoubleNode(writer, node, inArray, doubleValue);
         }
@@ -91,13 +93,15 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteStringNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
+        var value = node.Element?.GetString() ?? node.Value;
+
         if (inArray)
         {
-            writer.WriteStringValue(node.Value);
+            writer.WriteStringValue(value);
         }
         else
         {
-            writer.WriteString(node.Name, node.Value);
+            writer.WriteString(node.Name, value);
         }
     }
 
@@ -115,7 +119,7 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteBooleanNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        var value = Convert.ToBoolean(node.Value);
+        var value = node.Element?.GetBoolean() ?? Convert.ToBoolean(node.Value);
 
         if (inArray)
         {
@@ -153,14 +157,18 @@ internal static class Utf8JsonWriterExtensions
 
     public static void WriteStartNode(this Utf8JsonWriter writer, IJsonTreeNode node)
     {
+        if (node.Kind is not (JsonValueKind.Object or JsonValueKind.Array))
+        {
+            return;
+        }
+
         if (node.Kind is JsonValueKind.Array)
         {
             writer.WriteStartArray();
+            return;
         }
-        else if (node.Kind is JsonValueKind.Object)
-        {
-            writer.WriteStartObject();
-        }
+
+        writer.WriteStartObject();
     }
 
     public static void WriteSubTree(this Utf8JsonWriter writer, IJsonTreeNode node)
@@ -183,13 +191,17 @@ internal static class Utf8JsonWriterExtensions
 
     public static void WriteEndNode(this Utf8JsonWriter writer, IJsonTreeNode node)
     {
+        if (node.Kind is not (JsonValueKind.Object or JsonValueKind.Array))
+        {
+            return;
+        }
+
         if (node.Kind is JsonValueKind.Array)
         {
             writer.WriteEndArray();
+            return;
         }
-        else if (node.Kind is JsonValueKind.Object)
-        {
-            writer.WriteEndObject();
-        }
+
+        writer.WriteEndObject();
     }
 }

@@ -43,22 +43,21 @@ public sealed partial class JsonTree : IJsonTree
 
     private void DoTraverse(JsonElement element, Node node)
     {
+        node.Kind = element.ValueKind;
+
         switch (element.ValueKind)
         {
             case JsonValueKind.Object:
-                node.Kind = JsonValueKind.Object;
                 TraverseObject(element, node);
                 break;
             case JsonValueKind.Array:
-                node.Kind = JsonValueKind.Array;
                 TraverseArray(element, node);
                 break;
             case JsonValueKind.Null:
-                node.Kind = JsonValueKind.Null;
+                node.Element = null;
                 break;
             default:
-                node.Value = element.ToString();
-                node.Kind = element.ValueKind;
+                node.Element = element.Clone();
                 break;
         }
     }

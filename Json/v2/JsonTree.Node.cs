@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+
 namespace Json.v2;
 
 public sealed partial class JsonTree
@@ -7,9 +8,15 @@ public sealed partial class JsonTree
     public sealed class Node(string name = "") : IJsonTreeNode
     {
         public string Name { get; } = name;
+        public JsonElement? Element { get; set; }
         public string PathSegment { get; private init; } = name;
         public string Identity => _identity ??= BuildIdentity();
-        public string? Value { get; set; }
+
+        public string? Value
+        {
+            get => Element?.ToString();
+            set => Element = value is null ? null : ParseToElement(value);
+        }
 
         private string? _identity;
         public JsonValueKind Kind { get; set; }
@@ -76,7 +83,7 @@ public sealed partial class JsonTree
             }
 
             var first = name[0];
-            
+
             if (!(char.IsLetter(first) || first == '_' || first == '$'))
             {
                 return false;
@@ -85,7 +92,7 @@ public sealed partial class JsonTree
             for (var i = 1; i < name.Length; i++)
             {
                 var c = name[i];
-                
+
                 if (!(char.IsLetterOrDigit(c) || c == '_' || c == '$'))
                 {
                     return false;
@@ -173,6 +180,13 @@ public sealed partial class JsonTree
             BuildRecursiveString(sb);
 
             return sb.ToString().TrimEnd();
+        }
+
+        private static JsonElement ParseToElement(string value)
+        {
+            var doc = JsonDocument.Parse($"\"{value}\"");
+
+            return doc.RootElement.Clone();
         }
 
         public override string ToString()
