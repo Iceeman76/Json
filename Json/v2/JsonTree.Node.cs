@@ -2,11 +2,11 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace Json;
+namespace Json.v2;
 
 public sealed partial class JsonTree
 {
-    public sealed partial class Node(string name = "")
+    public sealed partial class Node(string name = "") : IJsonTreeNode
     {
         public string Name { get; } = name;
         public string PathSegment { get; private init; } = name;
@@ -14,7 +14,7 @@ public sealed partial class JsonTree
         public string? Value { get; set; }
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
-        public IReadOnlyList<Node> Children => _children;
+        public IReadOnlyList<IJsonTreeNode> Children => _children;
 
         private bool HasChildren => _children.Count > 0;
 
@@ -47,16 +47,16 @@ public sealed partial class JsonTree
             return node;
         }
 
-        public Node[] Flatten()
+        public IJsonTreeNode[] Flatten()
         {
-            var result = new List<Node>();
+            var result = new List<IJsonTreeNode>();
 
             CollectNodes(result);
 
             return result.ToArray();
         }
 
-        private void CollectNodes(List<Node> result)
+        private void CollectNodes(List<IJsonTreeNode> result)
         {
             if (_parent is not null)
             {
@@ -106,7 +106,7 @@ public sealed partial class JsonTree
             }
         }
 
-        internal void BuildRecursiveJson(Utf8JsonWriter writer)
+        public void BuildRecursiveJson(Utf8JsonWriter writer)
         {
             writer.WriteNode(this, InArray);
 

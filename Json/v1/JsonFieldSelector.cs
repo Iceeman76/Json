@@ -4,9 +4,9 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace Json;
+namespace Json.v1;
 
-public sealed partial record JsonFieldSelector
+public sealed partial record JsonFieldSelector : IJsonFieldSelector
 {
     private readonly JsonTree _tree;
 

@@ -3,13 +3,13 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
-namespace Json;
+namespace Json.v2;
 
-public sealed partial class JsonTree
+public sealed partial class JsonTree : IJsonTree
 {
     private readonly Node _rootNode;
-    private Node[]? _flattened;
-    private Dictionary<string, Node>? _index;
+    private IJsonTreeNode[]? _flattened;
+    private Dictionary<string, IJsonTreeNode>? _index;
 
     private JsonTree(Node rootNode)
     {
@@ -31,7 +31,7 @@ public sealed partial class JsonTree
         return tree;
     }
 
-    public Node? FindNode(string identity)
+    public IJsonTreeNode? FindNode(string identity)
     {
         if (_rootNode.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase))
         {
@@ -109,7 +109,7 @@ public sealed partial class JsonTree
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    public Node[] Flatten() => _flattened ??= _rootNode.Flatten();
+    public IJsonTreeNode[] Flatten() => _flattened ??= _rootNode.Flatten().Cast<IJsonTreeNode>().ToArray();
 
     public override string ToString() => _rootNode.BuildBranchString();
 }

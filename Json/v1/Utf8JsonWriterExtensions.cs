@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Text.Json;
 
-namespace Json;
+namespace Json.v1;
 
 internal static class Utf8JsonWriterExtensions
 {
-    private static readonly Dictionary<JsonValueKind, Action<Utf8JsonWriter, JsonTree.Node, bool>> MethodRouter = new()
+    private static readonly Dictionary<JsonValueKind, Action<Utf8JsonWriter, IJsonTreeNode, bool>> MethodRouter = new()
     {
         { JsonValueKind.Null, WriteNullNode },
         { JsonValueKind.True, WriteBooleanNode },
@@ -16,7 +16,7 @@ internal static class Utf8JsonWriterExtensions
         { JsonValueKind.Object, WriteStartObjectNode }
     };
 
-    public static void WriteNode(this Utf8JsonWriter writer, JsonTree.Node node, bool inArray)
+    public static void WriteNode(this Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
         if (node.Kind is JsonValueKind.Undefined)
         {
@@ -26,7 +26,7 @@ internal static class Utf8JsonWriterExtensions
         MethodRouter[node.Kind].Invoke(writer, node, inArray);
     }
 
-    private static void WriteNumberNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray)
+    private static void WriteNumberNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
         if (long.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var longValue))
         {
@@ -46,7 +46,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteLongNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray, long value)
+    private static void WriteLongNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray, long value)
     {
         if (inArray)
         {
@@ -58,7 +58,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteDoubleNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray, double value)
+    private static void WriteDoubleNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray, double value)
     {
         if (inArray)
         {
@@ -70,7 +70,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteDecimalNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray, decimal value)
+    private static void WriteDecimalNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray, decimal value)
     {
         if (inArray)
         {
@@ -82,7 +82,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteStringNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray)
+    private static void WriteStringNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
         if (inArray)
         {
@@ -94,7 +94,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteNullNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray)
+    private static void WriteNullNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
         if (inArray)
         {
@@ -106,7 +106,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteBooleanNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray)
+    private static void WriteBooleanNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
         var value = Convert.ToBoolean(node.Value);
 
@@ -120,7 +120,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteStartObjectNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray)
+    private static void WriteStartObjectNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
         if (inArray)
         {
@@ -132,7 +132,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    private static void WriteStartArrayNode(Utf8JsonWriter writer, JsonTree.Node node, bool inArray)
+    private static void WriteStartArrayNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
         if (inArray)
         {
@@ -144,7 +144,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    public static void WriteStartNode(this Utf8JsonWriter writer, JsonTree.Node node)
+    public static void WriteStartNode(this Utf8JsonWriter writer, IJsonTreeNode node)
     {
         if (node.Kind is JsonValueKind.Array)
         {
@@ -156,7 +156,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    public static void WriteSubTree(this Utf8JsonWriter writer, JsonTree.Node node)
+    public static void WriteSubTree(this Utf8JsonWriter writer, IJsonTreeNode node)
     {
         if (node.Kind is not (JsonValueKind.Object or JsonValueKind.Array))
         {
@@ -174,7 +174,7 @@ internal static class Utf8JsonWriterExtensions
         writer.WriteEndNode(node);
     }
 
-    public static void WriteEndNode(this Utf8JsonWriter writer, JsonTree.Node node)
+    public static void WriteEndNode(this Utf8JsonWriter writer, IJsonTreeNode node)
     {
         if (node.Kind is JsonValueKind.Array)
         {

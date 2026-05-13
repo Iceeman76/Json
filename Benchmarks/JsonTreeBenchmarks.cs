@@ -6,6 +6,9 @@ public class JsonTreeBenchmarks
 {
     private string _jsonString = null!;
 
+    [Params("v1", "v2")]
+    private string Version { get; set; } = null!;
+
     [GlobalSetup]
     public void GlobalSetup()
     {
@@ -13,5 +16,10 @@ public class JsonTreeBenchmarks
     }
 
     [Benchmark]
-    public JsonTree CreateTree() => JsonTree.Create(_jsonString);
+    public IJsonTree CreateTree() => Version switch
+    {
+        "v1" => Json.v1.JsonTree.Create(_jsonString),
+        "v2" => Json.v2.JsonTree.Create(_jsonString),
+        _ => throw new ArgumentOutOfRangeException()
+    };
 }
