@@ -16,13 +16,11 @@ public sealed partial class JsonTree : IJsonTree
         _rootNode = rootNode;
     }
 
-    public const int DefaultMaxDepth = 64;
-
-    public static JsonTree Create(string jsonString, string rootName = "$", int maxDepth = DefaultMaxDepth)
+    public static JsonTree Create(string jsonString, int maxDepth = 64)
     {
         var documentOptions = new JsonDocumentOptions { MaxDepth = maxDepth };
 
-        var rootNode = new Node(rootName);
+        var rootNode = new Node("$");
         var tree = new JsonTree(rootNode);
 
         using var doc = JsonDocument.Parse(jsonString, documentOptions);
@@ -39,6 +37,7 @@ public sealed partial class JsonTree : IJsonTree
         }
 
         _index ??= Flatten().ToDictionary(x => x.Identity, StringComparer.OrdinalIgnoreCase);
+
         return _index.GetValueOrDefault(identity);
     }
 
