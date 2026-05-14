@@ -28,15 +28,15 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteNumberNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        if (long.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var longValue))
+        if (long.TryParse(node.Value as string, NumberFormatInfo.InvariantInfo, out var longValue))
         {
             WriteLongNode(writer, node, inArray, longValue);
         }
-        else if (decimal.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var decimalValue))
+        else if (decimal.TryParse(node.Value as string, NumberFormatInfo.InvariantInfo, out var decimalValue))
         {
             WriteDecimalNode(writer, node, inArray, decimalValue);
         }
-        else if (double.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var doubleValue))
+        else if (double.TryParse(node.Value as string, NumberFormatInfo.InvariantInfo, out var doubleValue))
         {
             WriteDoubleNode(writer, node, inArray, doubleValue);
         }
@@ -84,13 +84,15 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteStringNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
+        var value = node.Value as string;
+
         if (inArray)
         {
-            writer.WriteStringValue(node.Value);
+            writer.WriteStringValue(value);
         }
         else
         {
-            writer.WriteString(node.Name, node.Value);
+            writer.WriteString(node.Name, value);
         }
     }
 

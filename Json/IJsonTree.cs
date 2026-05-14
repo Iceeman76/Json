@@ -14,7 +14,7 @@ public interface IJsonTreeNode
     string Name { get; }
     string PathSegment { get; }
     string Identity { get; }
-    string? Value { get; set; }
+    object? Value { get; set; }
     JsonValueKind Kind { get; set; }
     bool InArray { get; set; }
     IReadOnlyList<IJsonTreeNode> Children { get; }

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 
 namespace Json.v2;
@@ -36,21 +35,19 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteNumberNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        if (long.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var longValue))
+        switch (node.Value)
         {
-            WriteLongNode(writer, node, inArray, longValue);
-        }
-        else if (decimal.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var decimalValue))
-        {
-            WriteDecimalNode(writer, node, inArray, decimalValue);
-        }
-        else if (double.TryParse(node.Value, NumberFormatInfo.InvariantInfo, out var doubleValue))
-        {
-            WriteDoubleNode(writer, node, inArray, doubleValue);
-        }
-        else
-        {
-            throw new Exception($"Could not fit the value {node.Value} in any supported number type");
+            case long value:
+                WriteLongNode(writer, node, inArray, value);
+                break;
+            case decimal value:
+                WriteDecimalNode(writer, node, inArray, value);
+                break;
+            case double value:
+                WriteDoubleNode(writer, node, inArray, value);
+                break;
+            default:
+                throw new InvalidOperationException($"Unsupported number type {node.Value?.GetType()} for node '{node.Identity}'");
         }
     }
 
@@ -92,7 +89,7 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteStringNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        var value = node.Value;
+        var value = node.Value as string;
 
         if (inArray)
         {
@@ -118,7 +115,7 @@ internal static class Utf8JsonWriterExtensions
 
     private static void WriteBooleanNode(Utf8JsonWriter writer, IJsonTreeNode node, bool inArray)
     {
-        var value = Convert.ToBoolean(node.Value);
+        var value = (bool)node.Value!;
 
         if (inArray)
         {

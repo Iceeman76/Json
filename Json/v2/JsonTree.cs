@@ -57,7 +57,7 @@ public sealed partial class JsonTree : IJsonTree
                 node.Value = null;
                 break;
             default:
-                node.Value = element.ToString();
+                node.Value = element.GetValue();
                 break;
         }
     }

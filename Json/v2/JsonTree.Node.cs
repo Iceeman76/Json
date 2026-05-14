@@ -10,7 +10,7 @@ public sealed partial class JsonTree
         public string Name { get; } = name;
         public string PathSegment { get; private init; } = name;
         public string Identity => _identity ??= BuildIdentity();
-        public string? Value { get; set; }
+        public object? Value { get; set; }
 
         private string? _identity;
         public JsonValueKind Kind { get; set; }
