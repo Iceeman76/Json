@@ -147,13 +147,20 @@ internal static class PathExpressionWriter
 
         if (field.Sub is null)
         {
-            target.BuildRecursiveJson(writer);
+            if (field.Alias is null)
+            {
+                target.BuildRecursiveJson(writer);
+                return;
+            }
+
+            writer.WritePropertyName(field.Alias);
+            writer.WriteSubTree(target);
             return;
         }
 
         var asArray = field.ExplicitArray || target.Kind == JsonValueKind.Array;
 
-        writer.WritePropertyName(target.Name);
+        writer.WritePropertyName(field.Alias ?? target.Name);
 
         if (asArray)
         {

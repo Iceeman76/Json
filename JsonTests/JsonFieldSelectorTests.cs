@@ -320,4 +320,56 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo(expected));
     }
+
+    [Test]
+    public void Should_alias_plain_field()
+    {
+        const string jsonString = """{"name":"Alice","age":30}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[displayName:name,age]");
+
+        const string expected = """{"displayName":"Alice","age":30}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_alias_dotted_path()
+    {
+        const string jsonString = """{"events":[{"description":"A","league":{"name":"Premier League"}},{"description":"B","league":{"name":"Championship"}}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.events[description,league:league.name]");
+
+        const string expected = """[{"description":"A","league":"Premier League"},{"description":"B","league":"Championship"}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_alias_object_sub_projection()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30,"ssn":"secret"}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[info:person[name,age]]");
+
+        const string expected = """{"info":{"name":"Alice","age":30}}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_alias_array_projection()
+    {
+        const string jsonString = """{"crew":[{"id":1,"name":"Allan","age":50},{"id":2,"name":"Bertil","age":75}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[members:crew[id,name]]");
+
+        const string expected = """{"members":[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
 }

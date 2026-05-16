@@ -51,7 +51,7 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
     {
         foreach (var c in pathExpression)
         {
-            if (c is '[' or '*' or ',')
+            if (c is '[' or '*' or ',' or ':')
             {
                 return true;
             }

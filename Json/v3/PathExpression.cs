@@ -9,7 +9,7 @@ internal enum StepKind
 
 internal sealed record PathStep(StepKind Kind, string? Name);
 
-internal sealed record FieldExpr(IReadOnlyList<string> Path, bool ExplicitArray, Projection? Sub);
+internal sealed record FieldExpr(IReadOnlyList<string> Path, string? Alias, bool ExplicitArray, Projection? Sub);
 
 internal sealed record Projection(IReadOnlyList<FieldExpr> Fields);
 

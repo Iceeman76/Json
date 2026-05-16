@@ -70,7 +70,18 @@ internal static class PathParser
 
     private static FieldExpr ParseField(Cursor cursor)
     {
-        var path = new List<string> { cursor.ReadIdentifier() };
+        var firstIdentifier = cursor.ReadIdentifier();
+
+        string? alias = null;
+
+        if (cursor.HasMore && cursor.Peek() == ':')
+        {
+            alias = firstIdentifier;
+            cursor.Advance();
+            firstIdentifier = cursor.ReadIdentifier();
+        }
+
+        var path = new List<string> { firstIdentifier };
 
         while (cursor.HasMore && cursor.Peek() == '.')
         {
@@ -93,7 +104,7 @@ internal static class PathParser
             sub = ParseProjection(cursor);
         }
 
-        return new FieldExpr(path, explicitArray, sub);
+        return new FieldExpr(path, alias, explicitArray, sub);
     }
 
     private sealed class Cursor(string text)
