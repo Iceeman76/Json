@@ -28,7 +28,7 @@ internal static class PathParser
 
     private static bool IsTerminalProjection(Cursor cursor)
     {
-        return cursor.Peek() == '[' && !cursor.LooksLikeWildcardBracket();
+        return cursor.Peek() == '[' && !cursor.LooksLikeWildcardBracket() && !cursor.LooksLikeIndexBracket();
     }
 
     private static PathStep ParseStep(Cursor cursor)
@@ -46,9 +46,14 @@ internal static class PathParser
             return new PathStep(StepKind.Name, cursor.ReadIdentifier());
         }
 
-        cursor.Skip("[*]");
-        
-        return new PathStep(StepKind.AllElements, null);
+        if (cursor.LooksLikeWildcardBracket())
+        {
+            cursor.Skip("[*]");
+
+            return new PathStep(StepKind.AllElements, null);
+        }
+
+        return new PathStep(StepKind.Name, cursor.ReadIndex());
     }
 
     private static Projection ParseProjection(Cursor cursor)
@@ -83,10 +88,21 @@ internal static class PathParser
 
         var path = new List<string> { firstIdentifier };
 
-        while (cursor.HasMore && cursor.Peek() == '.')
+        while (cursor.HasMore)
         {
-            cursor.Advance();
-            path.Add(cursor.ReadIdentifier());
+            if (cursor.Peek() == '.')
+            {
+                cursor.Advance();
+                path.Add(cursor.ReadIdentifier());
+            }
+            else if (cursor.LooksLikeIndexBracket())
+            {
+                path.Add(cursor.ReadIndex());
+            }
+            else
+            {
+                break;
+            }
         }
 
         var explicitArray = false;
@@ -141,6 +157,31 @@ internal static class PathParser
                 && text[_position] == '['
                 && text[_position + 1] == '*'
                 && text[_position + 2] == ']';
+        }
+
+        public bool LooksLikeIndexBracket()
+        {
+            return _position + 1 < text.Length
+                && text[_position] == '['
+                && char.IsAsciiDigit(text[_position + 1]);
+        }
+
+        public string ReadIndex()
+        {
+            Expect('[');
+
+            var start = _position;
+
+            while (HasMore && char.IsAsciiDigit(text[_position]))
+            {
+                _position++;
+            }
+
+            var index = text[start.._position];
+
+            Expect(']');
+
+            return index;
         }
 
         public string ReadIdentifier()

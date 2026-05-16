@@ -372,4 +372,56 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo(expected));
     }
+
+    [Test]
+    public void Should_select_array_element_by_index()
+    {
+        const string jsonString = """{"participants":[{"id":7,"name":"KHK"},{"id":5,"name":"FBK"}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.participants[0]");
+
+        const string expected = """{"id":7,"name":"KHK"}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_select_property_via_indexed_path()
+    {
+        const string jsonString = """{"participants":[{"id":7,"name":"KHK"},{"id":5,"name":"FBK"}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.participants[1].name");
+
+        const string expected = "\"FBK\"";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_indexed_paths_with_aliases()
+    {
+        const string jsonString = """{"participants":[{"id":7,"name":"KHK"},{"id":5,"name":"FBK"}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[home:participants[0].name,away:participants[1].name]");
+
+        const string expected = """{"home":"KHK","away":"FBK"}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_select_via_chained_indices_in_nested_arrays()
+    {
+        const string jsonString = """{"matrix":[[1,2],[3,4]]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.matrix[1][0]");
+
+        const string expected = "3";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
 }
