@@ -6,7 +6,7 @@ public class TreeCreate
 {
     private string _jsonString = null!;
 
-    [Params("v1", "v2")]
+    [Params("v1", "v2", "v3")]
     public string Version { get; set; } = null!;
 
     [GlobalSetup]
@@ -20,6 +20,7 @@ public class TreeCreate
     {
         "v1" => Json.v1.JsonTree.Create(_jsonString),
         "v2" => Json.v2.JsonTree.Create(_jsonString),
+        "v3" => Json.v3.JsonTree.Create(_jsonString),
         _ => throw new ArgumentOutOfRangeException()
     };
 }
@@ -30,7 +31,7 @@ public abstract class JsonTreeBenchmarkBase
 {
     protected IJsonTree Tree = null!;
 
-    [Params("v1", "v2")]
+    [Params("v1", "v2", "v3")]
     public string Version { get; set; } = null!;
 
     [GlobalSetup]
@@ -42,6 +43,7 @@ public abstract class JsonTreeBenchmarkBase
         {
             "v1" => Json.v1.JsonTree.Create(jsonString),
             "v2" => Json.v2.JsonTree.Create(jsonString),
+            "v3" => Json.v3.JsonTree.Create(jsonString),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

@@ -6,7 +6,7 @@ public abstract class JsonFieldSelectorBenchmarkBase
 {
     protected IJsonFieldSelector Selector = null!;
 
-    [Params("v1", "v2")]
+    [Params("v1", "v2", "v3")]
     public string Version { get; set; } = null!;
 
     [GlobalSetup]
@@ -18,6 +18,7 @@ public abstract class JsonFieldSelectorBenchmarkBase
         {
             "v1" => new Json.v1.JsonFieldSelector(jsonString),
             "v2" => new Json.v2.JsonFieldSelector(jsonString),
+            "v3" => new Json.v3.JsonFieldSelector(jsonString),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

@@ -1,0 +1,16 @@
+namespace Json.v3;
+
+internal enum StepKind
+{
+    Name,
+    AllChildren,
+    AllElements
+}
+
+internal sealed record PathStep(StepKind Kind, string? Name);
+
+internal sealed record FieldExpr(IReadOnlyList<string> Path, bool ExplicitArray, Projection? Sub);
+
+internal sealed record Projection(IReadOnlyList<FieldExpr> Fields);
+
+internal sealed record PathQuery(IReadOnlyList<PathStep> Steps, bool HasArrayWildcard, Projection? Terminal);
