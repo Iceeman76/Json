@@ -424,4 +424,17 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo(expected));
     }
+
+    [Test]
+    public void Should_return_empty_array_when_path_segment_is_missing()
+    {
+        const string jsonString = """{"a":{"b":1}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.a.missing");
+
+        const string expected = "[]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
 }
