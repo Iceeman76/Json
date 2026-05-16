@@ -49,6 +49,11 @@ var result   = selector.Select("$.person.name");
 | `$.person[name,age]` | Object projected to the listed fields only |
 | `$[name,age]` | Projection from the root object |
 | `$.items[*][id,name]` | Array of projected objects |
+| `$.items[id,name]` | Same as above — `[*]` is inferred when the target is an array |
+| `$.order[id,customer[name,email]]` | Nested sub-projection inside an object |
+| `$[id,user[name,posts[title,date]]]` | Sub-projection at any depth, including arrays nested inside objects |
+
+Projections compose to arbitrary depth: each inner field may itself be plain, `field[*]`, `field[*][...]`, or `field[...]`. When the resolved node is an array, `field[...]` is treated as a per-element projection, so the explicit `[*]` is optional.
 
 Field names in projections and path segments are matched **case-insensitively**.
 
@@ -63,4 +68,10 @@ selector.Select("$.person[name,age]");
 
 // Nested wildcard + projection — returns [{...},{...}]
 selector.Select("$.store.book[*][title,price]");
+
+// Array auto-detect — same result as $.crew[*][id,name]
+selector.Select("$.crew[id,name]");
+
+// Sub-projection nested inside another sub-projection
+selector.Select("$[requestId,draw[drawComment,events[eventNumber,description]]]");
 ```
