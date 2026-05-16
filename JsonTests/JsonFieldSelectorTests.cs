@@ -11,7 +11,7 @@ public class JsonFieldSelectorTests
     {
         var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
         var selector = new JsonFieldSelector(jsonString);
-        var result = selector.Select("$[requestId,draw[drawComment,events[description,league.name]]]");
+        var result = selector.Select("$[id:requestId,info:draw[turnover,comment:drawComment,matches:events[number:eventNumber,country:league.country.name,home:participants[0].name,away:participants[1].name]]]");
         var tree = JsonTree.Create(result);
 
         TestContext.Progress.WriteLine(tree.ToJsonString(new JsonWriterOptions { Indented = true }));
