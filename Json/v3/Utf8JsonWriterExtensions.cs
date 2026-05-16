@@ -46,8 +46,6 @@ internal static class Utf8JsonWriterExtensions
             case double value:
                 WriteDoubleNode(writer, node, inArray, value);
                 break;
-            default:
-                throw new InvalidOperationException($"Unsupported number type {node.Value?.GetType()} for node '{node.Identity}'");
         }
     }
 
@@ -153,11 +151,6 @@ internal static class Utf8JsonWriterExtensions
 
     public static void WriteStartNode(this Utf8JsonWriter writer, IJsonTreeNode node)
     {
-        if (node.Kind is not (JsonValueKind.Object or JsonValueKind.Array))
-        {
-            return;
-        }
-
         if (node.Kind is JsonValueKind.Array)
         {
             writer.WriteStartArray();

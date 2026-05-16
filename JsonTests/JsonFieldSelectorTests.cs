@@ -437,4 +437,20 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo(expected));
     }
+
+    [Test]
+    public void Should_throw_when_identifier_missing_after_dot()
+    {
+        var selector = new JsonFieldSelector("""{"a":1}""");
+
+        Assert.That(() => selector.Select("$."), Throws.TypeOf<FormatException>());
+    }
+
+    [Test]
+    public void Should_throw_when_expression_does_not_start_with_dollar()
+    {
+        var selector = new JsonFieldSelector("""{"a":1}""");
+
+        Assert.That(() => selector.Select("a"), Throws.TypeOf<FormatException>());
+    }
 }

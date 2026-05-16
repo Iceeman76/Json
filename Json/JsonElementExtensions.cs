@@ -13,8 +13,7 @@ public static class JsonElementExtensions
             JsonValueKind.False => false,
             JsonValueKind.Number when element.TryGetInt64(out var value) => value,
             JsonValueKind.Number when element.TryGetDecimal(out var value) => value,
-            JsonValueKind.Number => element.GetDouble(),
-            _ => element.ToString()
+            JsonValueKind.Number => element.GetDouble()
         };
     }
 }

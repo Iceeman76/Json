@@ -182,6 +182,53 @@ public class JsonTreeTests
     }
 
     [Test]
+    public void Double_values_round_trip_in_object_and_array()
+    {
+        const string jsonString = """{"big":1e30,"items":[2e30]}""";
+
+        var tree = JsonTree.Create(jsonString);
+        var output = tree.ToJsonString();
+
+        using var document = JsonDocument.Parse(output);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(document.RootElement.GetProperty("big").GetDouble(), Is.EqualTo(1e30));
+            Assert.That(document.RootElement.GetProperty("items")[0].GetDouble(), Is.EqualTo(2e30));
+        }
+    }
+
+    [Test]
+    public void Boolean_values_round_trip_in_object_and_array()
+    {
+        const string jsonString = """{"enabled":true,"flags":[true,false]}""";
+
+        var tree = JsonTree.Create(jsonString);
+
+        Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+    }
+
+    [Test]
+    public void Decimal_values_round_trip_in_object_and_array()
+    {
+        const string jsonString = """{"price":1.5,"prices":[2.5,3.5]}""";
+
+        var tree = JsonTree.Create(jsonString);
+
+        Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+    }
+
+    [Test]
+    public void Null_values_round_trip_in_object_and_array()
+    {
+        const string jsonString = """{"value":null,"items":[null,null]}""";
+
+        var tree = JsonTree.Create(jsonString);
+
+        Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+    }
+
+    [Test]
     public void Nested_arrays()
     {
         const string jsonString = """
