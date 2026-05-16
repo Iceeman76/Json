@@ -166,6 +166,22 @@ public class JsonTreeTests
     }
 
     [Test]
+    public void Empty_string_key_uses_bracket_notation()
+    {
+        const string jsonString = """{"":42}""";
+
+        var tree = JsonTree.Create(jsonString);
+        var nodes = tree.Flatten();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(nodes[0].Name, Is.EqualTo(""));
+            Assert.That(nodes[0].PathSegment, Is.EqualTo("['']"));
+            Assert.That(nodes[0].Identity, Is.EqualTo("$['']"));
+        }
+    }
+
+    [Test]
     public void Nested_arrays()
     {
         const string jsonString = """
