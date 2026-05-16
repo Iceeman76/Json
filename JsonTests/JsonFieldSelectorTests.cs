@@ -11,10 +11,62 @@ public class JsonFieldSelectorTests
     {
         var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
         var selector = new JsonFieldSelector(jsonString);
-        var result = selector.Select("$.draw.events[*][eventNumber,description]");
+        var result = selector.Select("$[requestId,draw[drawComment,events[description,league.name]]]");
         var tree = JsonTree.Create(result);
 
         TestContext.Progress.WriteLine(tree.ToJsonString(new JsonWriterOptions { Indented = true }));
+    }
+
+    [Test]
+    public void Should_project_array_elements_inside_object_sub_projection()
+    {
+        const string jsonString = """{"requestId":"abc","draw":{"drawComment":"v1","events":[{"eventNumber":1,"description":"A","extra":"skip"},{"eventNumber":2,"description":"B","extra":"skip"}]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[requestId,draw[drawComment,events[*][eventNumber,description]]]");
+
+        const string expected = """{"requestId":"abc","draw":{"drawComment":"v1","events":[{"eventNumber":1,"description":"A"},{"eventNumber":2,"description":"B"}]}}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_auto_detect_array_in_sub_projection()
+    {
+        const string jsonString = """{"requestId":"abc","draw":{"drawComment":"v1","events":[{"eventNumber":1,"description":"A","extra":"skip"},{"eventNumber":2,"description":"B","extra":"skip"}]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[requestId,draw[drawComment,events[eventNumber,description]]]");
+
+        const string expected = """{"requestId":"abc","draw":{"drawComment":"v1","events":[{"eventNumber":1,"description":"A"},{"eventNumber":2,"description":"B"}]}}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_auto_detect_array_at_root_sub_projection()
+    {
+        const string jsonString = """{"crew":[{"id":1,"name":"Allan","age":50},{"id":2,"name":"Bertil","age":75}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.crew[id,name]");
+
+        const string expected = """[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_three_levels_deep()
+    {
+        const string jsonString = """{"a":{"b":{"c":{"x":1,"y":2,"z":"skip"},"other":"skip"},"more":"skip"}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.a[b[c[x,y]]]");
+
+        const string expected = """{"b":{"c":{"x":1,"y":2}}}""";
+
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
@@ -29,7 +81,24 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo(jsonString));
     }
+    
+    [Test]
+    public void Should_select_single_field_with_bracket_notation()
+    {
+        const string jsonString = """
+                                  {"itemCount":12}
+                                  """;
 
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[itemCount]");
+
+        const string expected = """
+                                {"itemCount":12}
+                                """;
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+    
     [Test]
     public void Should_select_nested_object()
     {
@@ -162,6 +231,19 @@ public class JsonFieldSelectorTests
     }
 
     [Test]
+    public void Should_select_all_properties_with_wildcard_on_root()
+    {
+        const string jsonString = """{"name":"Alice","age":30}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.*");
+
+        const string expected = """["Alice",30]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
     public void Should_be_case_insensitive()
     {
         const string jsonString = """{"name":"Alice","age":30,"ssn":"secret"}""";
@@ -170,6 +252,71 @@ public class JsonFieldSelectorTests
         var result = selector.Select("$[NAME,AGE]");
 
         const string expected = """{"name":"Alice","age":30}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_root_fields_with_wildcard_sub_selector()
+    {
+        const string jsonString = """{"requestId":"abc-123","draw":[{"id":1,"color":"red"},{"id":2,"color":"blue"}],"extra":"skip"}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[requestId,draw[*]]");
+
+        const string expected = """{"requestId":"abc-123","draw":[{"id":1,"color":"red"},{"id":2,"color":"blue"}]}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_root_fields_with_nested_sub_projection()
+    {
+        const string jsonString = """{"count":12,"entries":[{"id":"a1","label":"Item A","active":true,"details":{"id":"d1","name":"Detail One","description":"Some description"}}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[count,entries[*][id,label,details[id,name]]]");
+
+        const string expected = """{"count":12,"entries":[{"id":"a1","label":"Item A","details":{"id":"d1","name":"Detail One"}}]}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_sub_fields_from_nested_object()
+    {
+        const string jsonString = """{"order":{"id":1,"customer":{"name":"Alice","email":"a@b.com","phone":"123"},"total":100}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.order[id,customer[name,email]]");
+
+        const string expected = """{"id":1,"customer":{"name":"Alice","email":"a@b.com"}}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_array_elements_with_sub_projection_on_nested_field()
+    {
+        const string jsonString = """{"people":[{"name":"Alice","address":{"city":"Stockholm","zip":"111"}},{"name":"Bob","address":{"city":"Göteborg","zip":"222"}}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.people[*][name,address[city]]");
+
+        const string expected = """[{"name":"Alice","address":{"city":"Stockholm"}},{"name":"Bob","address":{"city":"Göteborg"}}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_multiple_fields_with_wildcard_sub_selectors()
+    {
+        const string jsonString = """{"a":"keep","b":[1,2,3],"c":[4,5],"d":"skip"}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[a,b[*],c[*]]");
+
+        const string expected = """{"a":"keep","b":[1,2,3],"c":[4,5]}""";
 
         Assert.That(result, Is.EqualTo(expected));
     }

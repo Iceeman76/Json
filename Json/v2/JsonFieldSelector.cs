@@ -32,6 +32,11 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
             return SelectProjection(basePath, fields);
         }
 
+        if (TryParseBracketAccess(pathExpression, out var singleBasePath, out var singleField))
+        {
+            return SelectProjection(singleBasePath, [singleField]);
+        }
+
         if (pathExpression.Contains("[*]") || pathExpression.Contains(".*"))
         {
             return SelectWildcard(pathExpression);
@@ -48,10 +53,10 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    private static bool TryParseProjection(string path, out string basePath, out string[] fields)
+    private static bool TryParseBracketAccess(string path, out string basePath, out string field)
     {
         basePath = "";
-        fields = [];
+        field = "";
 
         if (path.Length < 4 || path[^1] != ']')
         {
@@ -67,16 +72,58 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
 
         var inner = path.AsSpan((openBracket + 1)..^1);
 
-        if (inner.IndexOf(',') < 0)
+        if (inner.IndexOf(',') >= 0 || !IsIdentifier(inner.ToString()))
         {
             return false;
         }
 
-        var parts = inner.ToString().Split(',');
+        basePath = path[..openBracket];
+        field = inner.ToString();
+
+        return true;
+    }
+
+    private static bool TryParseProjection(string path, out string basePath, out string[] fields)
+    {
+        basePath = "";
+        fields = [];
+
+        if (path.Length < 4 || path[^1] != ']')
+        {
+            return false;
+        }
+
+        // Find the first '[' after the base path (skip past dots and identifiers)
+        var openBracket = FindFirstProjectionBracket(path);
+
+        if (openBracket < 1)
+        {
+            return false;
+        }
+
+        // Find the matching closing bracket
+        var closeBracket = FindMatchingBracket(path, openBracket);
+
+        if (closeBracket != path.Length - 1)
+        {
+            return false;
+        }
+
+        var inner = path[(openBracket + 1)..closeBracket];
+
+        // Split on top-level commas (not inside nested brackets)
+        var parts = SplitTopLevel(inner);
+
+        if (parts.Length == 0)
+        {
+            return false;
+        }
 
         foreach (var part in parts)
         {
-            if (IsIdentifier(part) == false)
+            var fieldName = part.Contains('[') ? part[..part.IndexOf('[')] : part;
+
+            if (IsIdentifier(fieldName) == false)
             {
                 return false;
             }
@@ -86,6 +133,83 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
         fields = parts;
 
         return true;
+    }
+
+    private static int FindFirstProjectionBracket(string path)
+    {
+        for (var i = 0; i < path.Length; i++)
+        {
+            if (path[i] == '[')
+            {
+                var close = FindMatchingBracket(path, i);
+
+                if (close < 0)
+                {
+                    return -1;
+                }
+
+                if (close == path.Length - 1)
+                {
+                    return i;
+                }
+
+                i = close;
+            }
+        }
+
+        return -1;
+    }
+
+    private static int FindMatchingBracket(string path, int openIndex)
+    {
+        var depth = 0;
+
+        for (var i = openIndex; i < path.Length; i++)
+        {
+            if (path[i] == '[')
+            {
+                depth++;
+            }
+            else if (path[i] == ']')
+            {
+                depth--;
+
+                if (depth == 0)
+                {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private static string[] SplitTopLevel(string inner)
+    {
+        var parts = new List<string>();
+        var depth = 0;
+        var start = 0;
+
+        for (var i = 0; i < inner.Length; i++)
+        {
+            if (inner[i] == '[')
+            {
+                depth++;
+            }
+            else if (inner[i] == ']')
+            {
+                depth--;
+            }
+            else if (inner[i] == ',' && depth == 0)
+            {
+                parts.Add(inner[start..i]);
+                start = i + 1;
+            }
+        }
+
+        parts.Add(inner[start..]);
+
+        return parts.ToArray();
     }
 
     private static bool IsIdentifier(string name)
@@ -197,8 +321,8 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
 
     private string SelectWildcard(string pathExpression)
     {
-        var matchedNodes = _tree.Flatten().Where(node => MatchesWildcardPattern(node.Identity, pathExpression));
-        var wrapInArray = pathExpression.Contains("[*]");
+        var matchedNodes = _tree.Flatten().Where(node => MatchesWildcardPattern(node.Identity, pathExpression)).ToList();
+        var wrapInArray = pathExpression.Contains("[*]") || matchedNodes.Count > 1;
 
         var buffer = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(buffer, _options);
@@ -237,7 +361,26 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
         }
         else
         {
-            WriteProjectionAsObject(writer, basePath, fields);
+            var baseNode = _tree.FindNode(basePath);
+
+            if (baseNode is { Kind: JsonValueKind.Array })
+            {
+                var arrayNodes = _tree.Flatten()
+                    .Where(n => MatchesWildcardPattern(n.Identity, $"{basePath}[*]"));
+
+                writer.WriteStartArray();
+
+                foreach (var arrayNode in arrayNodes)
+                {
+                    WriteProjectionAsObject(writer, arrayNode.Identity, fields);
+                }
+
+                writer.WriteEndArray();
+            }
+            else
+            {
+                WriteProjectionAsObject(writer, basePath, fields);
+            }
         }
 
         writer.Flush();
@@ -251,12 +394,74 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
 
         foreach (var field in fields)
         {
-            var identity = $"{basePath}.{field}";
-            var node = _tree.FindNode(identity);
-
-            node?.BuildRecursiveJson(writer);
+            WriteFieldProjection(writer, basePath, field);
         }
 
         writer.WriteEndObject();
+    }
+
+    private void WriteFieldProjection(Utf8JsonWriter writer, string basePath, string field)
+    {
+        var bracketIndex = field.IndexOf('[');
+
+        if (bracketIndex < 0)
+        {
+            var identity = $"{basePath}.{field}";
+            var node = _tree.FindNode(identity);
+            node?.BuildRecursiveJson(writer);
+            return;
+        }
+
+        var fieldName = field[..bracketIndex];
+        var subSelector = field[bracketIndex..];
+        var baseIdentity = $"{basePath}.{fieldName}";
+        var baseNode = _tree.FindNode(baseIdentity);
+
+        if (baseNode == null)
+        {
+            return;
+        }
+
+        if (subSelector == "[*]")
+        {
+            baseNode.BuildRecursiveJson(writer);
+            return;
+        }
+
+        if (subSelector.StartsWith("[*]") && subSelector.Length > 3)
+        {
+            var remainingSelector = subSelector[3..];
+            var innerFields = SplitTopLevel(remainingSelector[1..^1]);
+
+            WriteArrayProjection(writer, fieldName, baseIdentity, innerFields);
+            return;
+        }
+
+        var subFields = SplitTopLevel(subSelector[1..^1]);
+
+        if (baseNode.Kind == JsonValueKind.Array)
+        {
+            WriteArrayProjection(writer, fieldName, baseIdentity, subFields);
+            return;
+        }
+
+        writer.WritePropertyName(fieldName);
+        WriteProjectionAsObject(writer, baseIdentity, subFields);
+    }
+
+    private void WriteArrayProjection(Utf8JsonWriter writer, string fieldName, string baseIdentity, string[] innerFields)
+    {
+        var arrayNodes = _tree.Flatten()
+            .Where(n => MatchesWildcardPattern(n.Identity, $"{baseIdentity}[*]"));
+
+        writer.WritePropertyName(fieldName);
+        writer.WriteStartArray();
+
+        foreach (var arrayNode in arrayNodes)
+        {
+            WriteProjectionAsObject(writer, arrayNode.Identity, innerFields);
+        }
+
+        writer.WriteEndArray();
     }
 }
