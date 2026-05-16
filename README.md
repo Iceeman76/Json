@@ -52,8 +52,12 @@ var result   = selector.Select("$.person.name");
 | `$.items[id,name]` | Same as above — `[*]` is inferred when the target is an array |
 | `$.order[id,customer[name,email]]` | Nested sub-projection inside an object |
 | `$[id,user[name,posts[title,date]]]` | Sub-projection at any depth, including arrays nested inside objects |
+| `$.events[description,league.name]` | Dotted path inside a projection — descends into nested objects |
+| `$.events[description,league:league.name]` | Renames the projected field — emits as `"league"` instead of `"name"` |
 
 Projections compose to arbitrary depth: each inner field may itself be plain, `field[*]`, `field[*][...]`, or `field[...]`. When the resolved node is an array, `field[...]` is treated as a per-element projection, so the explicit `[*]` is optional.
+
+Any field inside a projection can be aliased with `alias:path` — the source path resolves normally and the emitted property name becomes `alias`. The alias may be combined with sub-projections, e.g. `info:person[name,age]` emits `{"info":{...}}`.
 
 Field names in projections and path segments are matched **case-insensitively**.
 
@@ -74,4 +78,7 @@ selector.Select("$.crew[id,name]");
 
 // Sub-projection nested inside another sub-projection
 selector.Select("$[requestId,draw[drawComment,events[eventNumber,description]]]");
+
+// Aliasing — emits {"members":[{"id":1,"name":"Allan"},...]}
+selector.Select("$[members:crew[id,name]]");
 ```
