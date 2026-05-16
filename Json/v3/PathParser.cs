@@ -161,9 +161,14 @@ internal static class PathParser
 
         public bool LooksLikeIndexBracket()
         {
-            return _position + 1 < text.Length
-                && text[_position] == '['
-                && char.IsAsciiDigit(text[_position + 1]);
+            if (_position + 1 >= text.Length || text[_position] != '[')
+            {
+                return false;
+            }
+
+            var next = text[_position + 1];
+
+            return char.IsAsciiDigit(next) || next == '-';
         }
 
         public string ReadIndex()
@@ -171,6 +176,11 @@ internal static class PathParser
             Expect('[');
 
             var start = _position;
+
+            if (HasMore && text[_position] == '-')
+            {
+                _position++;
+            }
 
             while (HasMore && char.IsAsciiDigit(text[_position]))
             {

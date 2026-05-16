@@ -55,6 +55,7 @@ var result   = selector.Select("$.person.name");
 | `$.events[description,league.name]` | Dotted path inside a projection — descends into nested objects |
 | `$.events[description,league:league.name]` | Renames the projected field — emits as `"league"` instead of `"name"` |
 | `$.participants[0]` | Specific array element by index |
+| `$.participants[-1]` | Negative index — counted from the end (`-1` is the last element) |
 | `$.matrix[1][0]` | Chained indices in nested arrays |
 | `$[home:participants[0].name]` | Indexed access inside a projection field, typically combined with an alias |
 
@@ -87,4 +88,7 @@ selector.Select("$[members:crew[id,name]]");
 
 // Indexed access with aliases — emits {"home":"KHK","away":"FBK"}
 selector.Select("$[home:participants[0].name,away:participants[1].name]");
+
+// Negative index — emits the last participant's name
+selector.Select("$.participants[-1].name");
 ```

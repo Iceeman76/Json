@@ -453,4 +453,56 @@ public class JsonFieldSelectorTests
 
         Assert.That(() => selector.Select("a"), Throws.TypeOf<FormatException>());
     }
+
+    [Test]
+    public void Should_select_last_array_element_with_negative_index()
+    {
+        const string jsonString = """{"participants":[{"id":7,"name":"KHK"},{"id":5,"name":"FBK"}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.participants[-1].name");
+
+        const string expected = "\"FBK\"";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_select_second_to_last_array_element_with_negative_index()
+    {
+        const string jsonString = """{"items":[10,20,30,40]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.items[-2]");
+
+        const string expected = "30";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_return_empty_array_when_negative_index_out_of_range()
+    {
+        const string jsonString = """{"items":[1,2,3]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.items[-99]");
+
+        const string expected = "[]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_combine_negative_index_with_alias_in_projection()
+    {
+        const string jsonString = """{"participants":[{"name":"KHK"},{"name":"FBK"},{"name":"AIK"}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$[winner:participants[-1].name]");
+
+        const string expected = """{"winner":"AIK"}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
 }

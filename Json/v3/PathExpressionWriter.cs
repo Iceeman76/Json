@@ -59,6 +59,13 @@ internal static class PathExpressionWriter
 
     private static IJsonTreeNode? FindChildByName(IJsonTreeNode parent, string name)
     {
+        if (IsNegativeIndex(name, out var negativeIndex))
+        {
+            var resolved = parent.Children.Count + negativeIndex;
+
+            return resolved >= 0 && resolved < parent.Children.Count ? parent.Children[resolved] : null;
+        }
+
         foreach (var child in parent.Children)
         {
             if (string.Equals(child.Name, name, StringComparison.OrdinalIgnoreCase))
@@ -68,6 +75,13 @@ internal static class PathExpressionWriter
         }
 
         return null;
+    }
+
+    private static bool IsNegativeIndex(string name, out int index)
+    {
+        index = 0;
+
+        return name.Length > 1 && name[0] == '-' && int.TryParse(name, out index);
     }
 
     private static void WriteRawResults(Utf8JsonWriter writer, List<IJsonTreeNode> targets, bool forceWrap)
