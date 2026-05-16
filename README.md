@@ -30,7 +30,7 @@ $['first name']   →  key that is not a valid identifier
 
 ## JsonFieldSelector
 
-Extracts and projects fields from a JSON document. Only wildcards and named properties are supported — specific array indices such as `[0]` are **not** part of the selector syntax.
+Extracts and projects fields from a JSON document. Supports named properties, wildcards, and array indices.
 
 ```csharp
 var selector = new JsonFieldSelector(jsonString);
@@ -54,6 +54,9 @@ var result   = selector.Select("$.person.name");
 | `$[id,user[name,posts[title,date]]]` | Sub-projection at any depth, including arrays nested inside objects |
 | `$.events[description,league.name]` | Dotted path inside a projection — descends into nested objects |
 | `$.events[description,league:league.name]` | Renames the projected field — emits as `"league"` instead of `"name"` |
+| `$.participants[0]` | Specific array element by index |
+| `$.matrix[1][0]` | Chained indices in nested arrays |
+| `$[home:participants[0].name]` | Indexed access inside a projection field, typically combined with an alias |
 
 Projections compose to arbitrary depth: each inner field may itself be plain, `field[*]`, `field[*][...]`, or `field[...]`. When the resolved node is an array, `field[...]` is treated as a per-element projection, so the explicit `[*]` is optional.
 
@@ -81,4 +84,7 @@ selector.Select("$[requestId,draw[drawComment,events[eventNumber,description]]]"
 
 // Aliasing — emits {"members":[{"id":1,"name":"Allan"},...]}
 selector.Select("$[members:crew[id,name]]");
+
+// Indexed access with aliases — emits {"home":"KHK","away":"FBK"}
+selector.Select("$[home:participants[0].name,away:participants[1].name]");
 ```
