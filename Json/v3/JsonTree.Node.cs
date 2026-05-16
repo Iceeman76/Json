@@ -59,11 +59,6 @@ public sealed partial class JsonTree
 
             var parentIdentity = _parent.Identity;
 
-            if (string.IsNullOrEmpty(parentIdentity))
-            {
-                return PathSegment;
-            }
-
             return PathSegment[0] == '['
                 ? string.Concat(parentIdentity, PathSegment)
                 : string.Concat(parentIdentity, ".", PathSegment);
