@@ -1,19 +1,18 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
-namespace Json.v1;
+namespace Json;
 
-public sealed partial class JsonTree : IJsonTree
+public sealed partial class JsonTree
 {
-    private readonly Node _rootNode;
-    private IJsonTreeNode[]? _flattened;
-    private Dictionary<string, IJsonTreeNode>? _index;
+    private Node[]? _flattened;
+    private Dictionary<string, Node>? _index;
 
     private JsonTree(Node rootNode)
     {
-        _rootNode = rootNode;
+        Root = rootNode;
     }
 
     public static JsonTree Create(string jsonString, int maxDepth = 64)
@@ -24,16 +23,18 @@ public sealed partial class JsonTree : IJsonTree
         var tree = new JsonTree(rootNode);
 
         using var doc = JsonDocument.Parse(jsonString, documentOptions);
-        tree.DoTraverse(doc.RootElement, tree._rootNode);
+        tree.DoTraverse(doc.RootElement, tree.Root);
 
         return tree;
     }
 
-    public IJsonTreeNode? FindNode(string jsonPath)
+    internal Node Root { get; }
+
+    public Node? FindNode(string jsonPath)
     {
-        if (_rootNode.JsonPath.Equals(jsonPath, StringComparison.OrdinalIgnoreCase))
+        if (Root.JsonPath.Equals(jsonPath, StringComparison.OrdinalIgnoreCase))
         {
-            return _rootNode;
+            return Root;
         }
 
         _index ??= Flatten().ToDictionary(x => x.JsonPath, StringComparer.OrdinalIgnoreCase);
@@ -43,22 +44,21 @@ public sealed partial class JsonTree : IJsonTree
 
     private void DoTraverse(JsonElement element, Node node)
     {
+        node.Kind = element.ValueKind;
+
         switch (element.ValueKind)
         {
             case JsonValueKind.Object:
-                node.Kind = JsonValueKind.Object;
                 TraverseObject(element, node);
                 break;
             case JsonValueKind.Array:
-                node.Kind = JsonValueKind.Array;
                 TraverseArray(element, node);
                 break;
             case JsonValueKind.Null:
-                node.Kind = JsonValueKind.Null;
+                node.Value = null;
                 break;
             default:
-                node.Value = element.ToString();
-                node.Kind = element.ValueKind;
+                node.Value = element.GetValue();
                 break;
         }
     }
@@ -95,20 +95,20 @@ public sealed partial class JsonTree : IJsonTree
         var buffer = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(buffer, options);
 
-        writer.WriteStartNode(_rootNode);
+        writer.WriteStartNode(Root);
 
-        foreach (var node in _rootNode.Children)
+        foreach (var node in Root.Children)
         {
             node.BuildRecursiveJson(writer);
         }
 
-        writer.WriteEndNode(_rootNode);
+        writer.WriteEndNode(Root);
         writer.Flush();
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    public IJsonTreeNode[] Flatten() => _flattened ??= _rootNode.Flatten().ToArray();
+    public Node[] Flatten() => _flattened ??= Root.Flatten().ToArray();
 
-    public override string ToString() => _rootNode.BuildBranchString();
+    public override string ToString() => Root.BuildBranchString();
 }

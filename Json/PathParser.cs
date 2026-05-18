@@ -1,4 +1,4 @@
-namespace Json.v3;
+namespace Json;
 
 internal static class PathParser
 {

@@ -3,9 +3,9 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
-namespace Json.v3;
+namespace Json;
 
-public sealed record JsonFieldSelector : IJsonFieldSelector
+public sealed record JsonFieldSelector 
 {
     private static readonly JsonWriterOptions WriterOptions = new()
     {
@@ -42,7 +42,7 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    private IJsonTreeNode? TryFastPathLookup(string pathExpression)
+    private JsonTree.Node? TryFastPathLookup(string pathExpression)
     {
         return HasProjectionOrWildcard(pathExpression) ? null : _tree.FindNode(pathExpression);
     }

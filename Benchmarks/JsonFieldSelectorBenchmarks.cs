@@ -4,23 +4,14 @@ namespace Benchmarks;
 [SimpleJob(warmupCount: 5, iterationCount: 20)]
 public abstract class JsonFieldSelectorBenchmarkBase
 {
-    protected IJsonFieldSelector Selector = null!;
-
-    [Params("v1", "v2", "v3")]
-    public string Version { get; set; } = null!;
+    protected JsonFieldSelector Selector { get; private set; } = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
     {
         var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
 
-        Selector = Version switch
-        {
-            "v1" => new Json.v1.JsonFieldSelector(jsonString),
-            "v2" => new Json.v2.JsonFieldSelector(jsonString),
-            "v3" => new Json.v3.JsonFieldSelector(jsonString),
-            _ => throw new ArgumentOutOfRangeException()
-        };
+        Selector = new JsonFieldSelector(jsonString);
     }
 }
 

@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.Json;
 
-namespace Json.v3;
+namespace Json;
 
 public sealed partial class JsonTree
 {
-    public sealed class Node(string name = "") : IJsonTreeNode
+    public sealed class Node(string name = "")
     {
         public string Name { get; } = name;
         public string PathSegment { get; private init; } = name;
@@ -15,7 +15,7 @@ public sealed partial class JsonTree
         private string? _jsonPath;
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
-        public IReadOnlyList<IJsonTreeNode> Children => _children;
+        public IReadOnlyList<Node> Children => _children;
 
         private bool HasChildren => _children.Count > 0;
 
@@ -91,16 +91,16 @@ public sealed partial class JsonTree
             return true;
         }
 
-        public IJsonTreeNode[] Flatten()
+        public Node[] Flatten()
         {
-            var result = new List<IJsonTreeNode>();
+            var result = new List<Node>();
 
             CollectNodes(result);
 
             return result.ToArray();
         }
 
-        private void CollectNodes(List<IJsonTreeNode> result)
+        private void CollectNodes(List<Node> result)
         {
             if (_parent is not null)
             {

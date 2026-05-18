@@ -1,10 +1,10 @@
 using System.Text.Json;
 
-namespace Json.v3;
+namespace Json;
 
 internal static class PathExpressionWriter
 {
-    public static void Write(Utf8JsonWriter writer, IJsonTreeNode root, PathQuery query)
+    public static void Write(Utf8JsonWriter writer, JsonTree.Node root, PathQuery query)
     {
         var targets = EvaluateSteps(root, query.Steps);
 
@@ -18,21 +18,16 @@ internal static class PathExpressionWriter
         }
     }
 
-    private static List<IJsonTreeNode> EvaluateSteps(IJsonTreeNode root, IReadOnlyList<PathStep> steps)
+    private static List<JsonTree.Node> EvaluateSteps(JsonTree.Node root, IReadOnlyList<PathStep> steps)
     {
-        var current = new List<IJsonTreeNode> { root };
+        var current = new List<JsonTree.Node> { root };
 
-        foreach (var step in steps)
-        {
-            current = ApplyStep(current, step);
-        }
-
-        return current;
+        return steps.Aggregate(current, ApplyStep);
     }
 
-    private static List<IJsonTreeNode> ApplyStep(List<IJsonTreeNode> nodes, PathStep step)
+    private static List<JsonTree.Node> ApplyStep(List<JsonTree.Node> nodes, PathStep step)
     {
-        var next = new List<IJsonTreeNode>();
+        var next = new List<JsonTree.Node>();
 
         foreach (var node in nodes)
         {
@@ -57,7 +52,7 @@ internal static class PathExpressionWriter
         return next;
     }
 
-    private static IJsonTreeNode? FindChildByName(IJsonTreeNode parent, string name)
+    private static JsonTree.Node? FindChildByName(JsonTree.Node parent, string name)
     {
         if (IsNegativeIndex(name, out var negativeIndex))
         {
@@ -84,7 +79,7 @@ internal static class PathExpressionWriter
         return name.Length > 1 && name[0] == '-' && int.TryParse(name, out index);
     }
 
-    private static void WriteRawResults(Utf8JsonWriter writer, List<IJsonTreeNode> targets, bool forceWrap)
+    private static void WriteRawResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, bool forceWrap)
     {
         if (!forceWrap && targets.Count == 1)
         {
@@ -102,7 +97,7 @@ internal static class PathExpressionWriter
         writer.WriteEndArray();
     }
 
-    private static void WriteProjectionResults(Utf8JsonWriter writer, List<IJsonTreeNode> targets, bool forceWrap, Projection projection)
+    private static void WriteProjectionResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, bool forceWrap, Projection projection)
     {
         if (!forceWrap && targets.Count == 1)
         {
@@ -120,7 +115,7 @@ internal static class PathExpressionWriter
         writer.WriteEndArray();
     }
 
-    private static void WriteProjectedTarget(Utf8JsonWriter writer, IJsonTreeNode target, Projection projection)
+    private static void WriteProjectedTarget(Utf8JsonWriter writer, JsonTree.Node target, Projection projection)
     {
         if (target.Kind == JsonValueKind.Array)
         {
@@ -138,7 +133,7 @@ internal static class PathExpressionWriter
         WriteProjectedObject(writer, target, projection);
     }
 
-    private static void WriteProjectedObject(Utf8JsonWriter writer, IJsonTreeNode parent, Projection projection)
+    private static void WriteProjectedObject(Utf8JsonWriter writer, JsonTree.Node parent, Projection projection)
     {
         writer.WriteStartObject();
 
@@ -150,7 +145,7 @@ internal static class PathExpressionWriter
         writer.WriteEndObject();
     }
 
-    private static void WriteField(Utf8JsonWriter writer, IJsonTreeNode parent, FieldExpr field)
+    private static void WriteField(Utf8JsonWriter writer, JsonTree.Node parent, FieldExpr field)
     {
         var target = parent;
 
