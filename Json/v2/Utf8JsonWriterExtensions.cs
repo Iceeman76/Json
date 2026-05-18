@@ -29,7 +29,7 @@ internal static class Utf8JsonWriterExtensions
                 break;
             case JsonValueKind.Undefined:
             default:
-                throw new InvalidOperationException($"Node '{node.Identity}' has Kind = {node.Kind} and cannot be written.");
+                throw new InvalidOperationException($"Node '{node.JsonPath}' has Kind = {node.Kind} and cannot be written.");
         }
     }
 
@@ -47,7 +47,7 @@ internal static class Utf8JsonWriterExtensions
                 WriteDoubleNode(writer, node, inArray, value);
                 break;
             default:
-                throw new InvalidOperationException($"Unsupported number type {node.Value?.GetType()} for node '{node.Identity}'");
+                throw new InvalidOperationException($"Unsupported number type {node.Value?.GetType()} for node '{node.JsonPath}'");
         }
     }
 

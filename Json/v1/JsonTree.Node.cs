@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -10,7 +10,7 @@ public sealed partial class JsonTree
     {
         public string Name { get; } = name;
         public string PathSegment { get; private init; } = name;
-        public string Identity { get; private init; } = name;
+        public string JsonPath { get; private init; } = name;
         public object? Value { get; set; }
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
@@ -31,15 +31,15 @@ public sealed partial class JsonTree
                     ? name
                     : $"['{name}']";
 
-            var identity = string.IsNullOrEmpty(Identity)
+            var jsonPath = string.IsNullOrEmpty(JsonPath)
                 ? pathSegment
-                : $"{Identity}.{pathSegment}".Replace(".[", "[");
+                : $"{JsonPath}.{pathSegment}".Replace(".[", "[");
 
             var node = new Node(name)
             {
                 _parent = this,
                 PathSegment = pathSegment,
-                Identity = identity
+                JsonPath = jsonPath
             };
 
             _children.Add(node);
@@ -77,7 +77,7 @@ public sealed partial class JsonTree
             }
             else
             {
-                sb.Append(' ', depth * 4).Append(Identity);
+                sb.Append(' ', depth * 4).Append(JsonPath);
 
                 if (HasChildren)
                 {
@@ -129,7 +129,7 @@ public sealed partial class JsonTree
 
         public override string ToString()
         {
-            return $"Name = {Name}, Value = {Value}, Kind = {Kind}, Identity = {Identity}";
+            return $"Name = {Name}, Value = {Value}, Kind = {Kind}, JsonPath = {JsonPath}";
         }
 
         [GeneratedRegex(@"^[A-Za-z_\$][A-Za-z0-9_\$]*$")]

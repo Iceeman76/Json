@@ -29,7 +29,7 @@ internal static class Utf8JsonWriterExtensions
                 break;
             case JsonValueKind.Undefined:
             default:
-                throw new InvalidOperationException($"Node '{node.Identity}' has Kind = {node.Kind} and cannot be written.");
+                throw new InvalidOperationException($"Node '{node.JsonPath}' has Kind = {node.Kind} and cannot be written.");
         }
     }
 

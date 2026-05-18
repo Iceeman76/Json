@@ -239,9 +239,9 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
         return true;
     }
 
-    private static bool MatchesWildcardPattern(string identity, string pattern)
+    private static bool MatchesWildcardPattern(string jsonPath, string pattern)
     {
-        return MatchesWildcard(identity.AsSpan(), pattern.AsSpan(), StringComparison.OrdinalIgnoreCase);
+        return MatchesWildcard(jsonPath.AsSpan(), pattern.AsSpan(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool MatchesWildcard(ReadOnlySpan<char> text, ReadOnlySpan<char> pattern, StringComparison comparison)
@@ -321,7 +321,7 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
 
     private string SelectWildcard(string pathExpression)
     {
-        var matchedNodes = _tree.Flatten().Where(node => MatchesWildcardPattern(node.Identity, pathExpression)).ToList();
+        var matchedNodes = _tree.Flatten().Where(node => MatchesWildcardPattern(node.JsonPath, pathExpression)).ToList();
         var wrapInArray = pathExpression.Contains("[*]") || matchedNodes.Count > 1;
 
         var buffer = new ArrayBufferWriter<byte>();
@@ -348,13 +348,13 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
 
         if (basePath.Contains("[*]"))
         {
-            var nodes = _tree.Flatten().Where(node => MatchesWildcardPattern(node.Identity, basePath));
+            var nodes = _tree.Flatten().Where(node => MatchesWildcardPattern(node.JsonPath, basePath));
 
             writer.WriteStartArray();
 
             foreach (var node in nodes)
             {
-                WriteProjectionAsObject(writer, node.Identity, fields);
+                WriteProjectionAsObject(writer, node.JsonPath, fields);
             }
 
             writer.WriteEndArray();
@@ -366,13 +366,13 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
             if (baseNode is { Kind: JsonValueKind.Array })
             {
                 var arrayNodes = _tree.Flatten()
-                    .Where(n => MatchesWildcardPattern(n.Identity, $"{basePath}[*]"));
+                    .Where(n => MatchesWildcardPattern(n.JsonPath, $"{basePath}[*]"));
 
                 writer.WriteStartArray();
 
                 foreach (var arrayNode in arrayNodes)
                 {
-                    WriteProjectionAsObject(writer, arrayNode.Identity, fields);
+                    WriteProjectionAsObject(writer, arrayNode.JsonPath, fields);
                 }
 
                 writer.WriteEndArray();
@@ -406,16 +406,16 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
 
         if (bracketIndex < 0)
         {
-            var identity = $"{basePath}.{field}";
-            var node = _tree.FindNode(identity);
+            var jsonPath = $"{basePath}.{field}";
+            var node = _tree.FindNode(jsonPath);
             node?.BuildRecursiveJson(writer);
             return;
         }
 
         var fieldName = field[..bracketIndex];
         var subSelector = field[bracketIndex..];
-        var baseIdentity = $"{basePath}.{fieldName}";
-        var baseNode = _tree.FindNode(baseIdentity);
+        var baseJsonPath = $"{basePath}.{fieldName}";
+        var baseNode = _tree.FindNode(baseJsonPath);
 
         if (baseNode == null)
         {
@@ -433,7 +433,7 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
             var remainingSelector = subSelector[3..];
             var innerFields = SplitTopLevel(remainingSelector[1..^1]);
 
-            WriteArrayProjection(writer, fieldName, baseIdentity, innerFields);
+            WriteArrayProjection(writer, fieldName, baseJsonPath, innerFields);
             return;
         }
 
@@ -441,25 +441,25 @@ public sealed record JsonFieldSelector : IJsonFieldSelector
 
         if (baseNode.Kind == JsonValueKind.Array)
         {
-            WriteArrayProjection(writer, fieldName, baseIdentity, subFields);
+            WriteArrayProjection(writer, fieldName, baseJsonPath, subFields);
             return;
         }
 
         writer.WritePropertyName(fieldName);
-        WriteProjectionAsObject(writer, baseIdentity, subFields);
+        WriteProjectionAsObject(writer, baseJsonPath, subFields);
     }
 
-    private void WriteArrayProjection(Utf8JsonWriter writer, string fieldName, string baseIdentity, string[] innerFields)
+    private void WriteArrayProjection(Utf8JsonWriter writer, string fieldName, string baseJsonPath, string[] innerFields)
     {
         var arrayNodes = _tree.Flatten()
-            .Where(n => MatchesWildcardPattern(n.Identity, $"{baseIdentity}[*]"));
+            .Where(n => MatchesWildcardPattern(n.JsonPath, $"{baseJsonPath}[*]"));
 
         writer.WritePropertyName(fieldName);
         writer.WriteStartArray();
 
         foreach (var arrayNode in arrayNodes)
         {
-            WriteProjectionAsObject(writer, arrayNode.Identity, innerFields);
+            WriteProjectionAsObject(writer, arrayNode.JsonPath, innerFields);
         }
 
         writer.WriteEndArray();

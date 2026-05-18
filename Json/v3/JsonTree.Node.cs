@@ -9,10 +9,10 @@ public sealed partial class JsonTree
     {
         public string Name { get; } = name;
         public string PathSegment { get; private init; } = name;
-        public string Identity => _identity ??= BuildIdentity();
+        public string JsonPath => _jsonPath ??= BuildJsonPath();
         public object? Value { get; set; }
 
-        private string? _identity;
+        private string? _jsonPath;
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; set; }
         public IReadOnlyList<IJsonTreeNode> Children => _children;
@@ -50,18 +50,18 @@ public sealed partial class JsonTree
             return $"['{name}']";
         }
 
-        private string BuildIdentity()
+        private string BuildJsonPath()
         {
             if (_parent is null)
             {
                 return Name;
             }
 
-            var parentIdentity = _parent.Identity;
+            var parentJsonPath = _parent.JsonPath;
 
             return PathSegment[0] == '['
-                ? string.Concat(parentIdentity, PathSegment)
-                : string.Concat(parentIdentity, ".", PathSegment);
+                ? string.Concat(parentJsonPath, PathSegment)
+                : string.Concat(parentJsonPath, ".", PathSegment);
         }
 
         private static bool IsJavaScriptIdentifier(string name)
@@ -121,7 +121,7 @@ public sealed partial class JsonTree
             }
             else
             {
-                sb.Append(' ', depth * 4).Append(Identity);
+                sb.Append(' ', depth * 4).Append(JsonPath);
 
                 if (HasChildren)
                 {
@@ -173,7 +173,7 @@ public sealed partial class JsonTree
 
         public override string ToString()
         {
-            return $"Name = {Name}, Value = {Value}, Kind = {Kind}, Identity = {Identity}";
+            return $"Name = {Name}, Value = {Value}, Kind = {Kind}, JsonPath = {JsonPath}";
         }
     }
 }

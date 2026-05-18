@@ -20,7 +20,7 @@ internal static class Utf8JsonWriterExtensions
     {
         if (node.Kind is JsonValueKind.Undefined)
         {
-            throw new InvalidOperationException($"Node '{node.Identity}' has Kind = Undefined and cannot be written.");
+            throw new InvalidOperationException($"Node '{node.JsonPath}' has Kind = Undefined and cannot be written.");
         }
 
         MethodRouter[node.Kind].Invoke(writer, node, inArray);

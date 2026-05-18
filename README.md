@@ -4,7 +4,7 @@ A .NET library for parsing JSON into a navigable tree and extracting fields via 
 
 ## JsonTree
 
-Parses a JSON string into an in-memory tree where each node has a full identity path (e.g. `$.person.name`, `$['first name']`).
+Parses a JSON string into an in-memory tree where each node has a full JSONPath (e.g. `$.person.name`, `$['first name']`).
 
 ```csharp
 var tree = JsonTree.Create("""{"person":{"name":"Alice","age":30}}""");
@@ -12,13 +12,13 @@ var tree = JsonTree.Create("""{"person":{"name":"Alice","age":30}}""");
 var node = tree.FindNode("$.person.name");
 // node.Value    → "Alice"
 // node.Kind     → JsonValueKind.String
-// node.Identity → "$.person.name"
+// node.JsonPath → "$.person.name"
 
 var nodes = tree.Flatten();        // all nodes as a flat array
 var json  = tree.ToJsonString();   // round-trip back to JSON
 ```
 
-Node identities use dot notation for object properties and bracket notation for array indices and non-identifier keys:
+Node JsonPaths use dot notation for object properties and bracket notation for array indices and non-identifier keys:
 
 ```
 $.person          →  regular object property
@@ -26,7 +26,7 @@ $.matrix[0][1]    →  array indices
 $['first name']   →  key that is not a valid identifier
 ```
 
-`FindNode` accepts an identity path and returns the matching node, or `null` if not found. Lookup is case-insensitive.
+`FindNode` accepts a JSONPath and returns the matching node, or `null` if not found. Lookup is case-insensitive.
 
 ## JsonFieldSelector
 

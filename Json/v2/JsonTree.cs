@@ -29,16 +29,16 @@ public sealed partial class JsonTree : IJsonTree
         return tree;
     }
 
-    public IJsonTreeNode? FindNode(string identity)
+    public IJsonTreeNode? FindNode(string jsonPath)
     {
-        if (_rootNode.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase))
+        if (_rootNode.JsonPath.Equals(jsonPath, StringComparison.OrdinalIgnoreCase))
         {
             return _rootNode;
         }
 
-        _index ??= Flatten().ToDictionary(x => x.Identity, StringComparer.OrdinalIgnoreCase);
+        _index ??= Flatten().ToDictionary(x => x.JsonPath, StringComparer.OrdinalIgnoreCase);
 
-        return _index.GetValueOrDefault(identity);
+        return _index.GetValueOrDefault(jsonPath);
     }
 
     private void DoTraverse(JsonElement element, Node node)

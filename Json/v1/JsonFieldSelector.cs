@@ -57,7 +57,7 @@ public sealed partial record JsonFieldSelector : IJsonFieldSelector
         var escaped = Regex.Escape(expression).Replace("\x01", @"\[\d+\]").Replace("\x02", @"[^.\[\]]+");
         var pattern = $"^{escaped}$";
 
-        var matchedNodes = _tree.Flatten().Where(node => Regex.IsMatch(node.Identity, pattern, RegexOptions.IgnoreCase));
+        var matchedNodes = _tree.Flatten().Where(node => Regex.IsMatch(node.JsonPath, pattern, RegexOptions.IgnoreCase));
         var wrapInArray = pathExpression.Contains("[*]");
 
         var buffer = new ArrayBufferWriter<byte>();
@@ -88,13 +88,13 @@ public sealed partial record JsonFieldSelector : IJsonFieldSelector
         if (basePath.Contains("[*]"))
         {
             var basePattern = "^" + Regex.Escape(basePath.Replace("[*]", "\x01")).Replace("\x01", @"\[\d+\]") + "$";
-            var nodes = _tree.Flatten().Where(node => Regex.IsMatch(node.Identity, basePattern));
+            var nodes = _tree.Flatten().Where(node => Regex.IsMatch(node.JsonPath, basePattern));
 
             writer.WriteStartArray();
 
             foreach (var node in nodes)
             {
-                WriteProjectionAsObject(writer, node.Identity, fields);
+                WriteProjectionAsObject(writer, node.JsonPath, fields);
             }
 
             writer.WriteEndArray();
@@ -115,8 +115,8 @@ public sealed partial record JsonFieldSelector : IJsonFieldSelector
 
         foreach (var field in fields)
         {
-            var identity = $"{basePath}.{field}";
-            var node = _tree.FindNode(identity);
+            var jsonPath = $"{basePath}.{field}";
+            var node = _tree.FindNode(jsonPath);
 
             node?.BuildRecursiveJson(writer);
         }
