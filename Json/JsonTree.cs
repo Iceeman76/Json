@@ -14,6 +14,7 @@ public sealed partial class JsonTree
     private JsonTree(Node rootNode)
     {
         Root = rootNode;
+        Root.AttachTo(this);
     }
 
     public static JsonTree Parse(string jsonString, int maxDepth = 64)
@@ -105,6 +106,12 @@ public sealed partial class JsonTree
     }
 
     public Node[] Flatten() => _flattened ??= Root.Flatten().ToArray();
+
+    private void InvalidateCaches()
+    {
+        _flattened = null;
+        _index = null;
+    }
 
     public override string ToString() => Root.BuildBranchString();
 }

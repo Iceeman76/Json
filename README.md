@@ -18,6 +18,37 @@ var nodes = tree.Flatten();        // all nodes as a flat array
 var json  = tree.ToJsonString();   // round-trip back to JSON
 ```
 
+You can also build a tree programmatically:
+
+```csharp
+var tree = JsonTree.Create()
+    .AddObject("person", person => person
+        .Add("Name", "Molly")
+        .Add("Age", 30)
+        .AddObject("Address", address => address
+            .Add("Country", "Sweden"))
+        .AddArray("Tags", tags => tags
+            .Add("friend")
+            .Add("vip")
+            .AddNull()));
+
+var json = tree.ToJsonString();
+// {"person":{"Name":"Molly","Age":30,"Address":{"Country":"Sweden"},"Tags":["friend","vip",null]}}
+```
+
+For a root array, use `CreateArray`:
+
+```csharp
+var tree = JsonTree.CreateArray()
+    .Add(items => items
+        .Add("Molly")
+        .Add(30)
+        .AddObject(person => person.Add("Country", "Sweden")));
+
+var json = tree.ToJsonString();
+// ["Molly",30,{"Country":"Sweden"}]
+```
+
 Node JsonPaths use dot notation for object properties and bracket notation for array indices and non-identifier keys:
 
 ```

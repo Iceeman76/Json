@@ -5,7 +5,7 @@ namespace Json;
 
 public sealed partial class JsonTree
 {
-    public sealed class Node(string name = "")
+    public sealed partial class Node(string name = "")
     {
         public string Name { get; } = name;
         public string PathSegment { get; private init; } = name;
@@ -13,6 +13,7 @@ public sealed partial class JsonTree
         public object? Value { get; set; }
 
         private string? _jsonPath;
+        private JsonTree? _tree;
         public JsonValueKind Kind { get; set; }
         public bool InArray { get; private init; }
         public IReadOnlyList<Node> Children => _children;
@@ -22,16 +23,23 @@ public sealed partial class JsonTree
         private Node? _parent;
         private readonly List<Node> _children = [];
 
+        internal void AttachTo(JsonTree tree)
+        {
+            _tree = tree;
+        }
+
         internal Node AddNode(string name, bool isArrayIndex)
         {
             var node = new Node(name)
             {
                 _parent = this,
+                _tree = _tree,
                 InArray = isArrayIndex,
                 PathSegment = BuildPathSegment(name, isArrayIndex)
             };
 
             _children.Add(node);
+            _tree?.InvalidateCaches();
 
             return node;
         }

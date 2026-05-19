@@ -46,6 +46,8 @@ internal static class Utf8JsonWriterExtensions
             case double value:
                 WriteDoubleNode(writer, node, inArray, value);
                 break;
+            default:
+                throw new InvalidOperationException($"Node '{node.JsonPath}' has unsupported number type: {node.Value?.GetType().FullName ?? "null"}.");
         }
     }
 
