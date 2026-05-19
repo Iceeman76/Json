@@ -607,6 +607,23 @@ public class JsonTreeTests
     }
 
     [Test]
+    public void ToJsonString_throws_when_number_node_has_unsupported_value_type()
+    {
+        const string jsonString = """
+                                  {"a":1}
+                                  """;
+
+        var tree = JsonTree.Parse(jsonString);
+        var node = tree.FindNode("$.a");
+
+        Assert.That(node, Is.Not.Null);
+        node.Value = "not a number";
+
+        Assert.That(() => tree.ToJsonString(), Throws.TypeOf<InvalidOperationException>()
+            .With.Message.EqualTo("Node '$.a' has unsupported number type: System.String."));
+    }
+
+    [Test]
     public void Create_throws_when_json_exceeds_default_max_depth()
     {
         var jsonString = BuildNestedJson(65);

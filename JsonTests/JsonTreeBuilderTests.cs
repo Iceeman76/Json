@@ -67,6 +67,39 @@ public class JsonTreeBuilderTests
     }
 
     [Test]
+    public void Builder_supports_ulong_values()
+    {
+        var tree = JsonTree.Create().Add("value", ulong.MaxValue);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(tree.FindNode("$.value")!.Value, Is.EqualTo(18446744073709551615m));
+            Assert.That(tree.ToJsonString(), Is.EqualTo("""{"value":18446744073709551615}"""));
+        }
+    }
+
+    [Test]
+    public void Builder_supports_float_values()
+    {
+        var tree = JsonTree.Create().Add("value", 12.5f);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(tree.FindNode("$.value")!.Value, Is.EqualTo(12.5d));
+            Assert.That(tree.ToJsonString(), Is.EqualTo("""{"value":12.5}"""));
+        }
+    }
+
+    [Test]
+    public void Unsupported_value_type_cannot_be_added()
+    {
+        var tree = JsonTree.Create();
+
+        Assert.That(() => tree.Add("value", DateTime.UnixEpoch), Throws.TypeOf<ArgumentException>()
+            .With.Message.EqualTo("Unsupported JSON value type: System.DateTime (Parameter 'value')"));
+    }
+
+    [Test]
     public void Root_array_can_be_built_programmatically()
     {
         var tree = JsonTree.CreateArray()
