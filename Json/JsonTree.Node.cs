@@ -14,7 +14,7 @@ public sealed partial class JsonTree
 
         private string? _jsonPath;
         public JsonValueKind Kind { get; set; }
-        public bool InArray { get; set; }
+        public bool InArray { get; private init; }
         public IReadOnlyList<Node> Children => _children;
 
         private bool HasChildren => _children.Count > 0;
@@ -27,6 +27,7 @@ public sealed partial class JsonTree
             var node = new Node(name)
             {
                 _parent = this,
+                InArray = isArrayIndex,
                 PathSegment = BuildPathSegment(name, isArrayIndex)
             };
 
