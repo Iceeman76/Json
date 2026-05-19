@@ -16,7 +16,7 @@ public sealed partial class JsonTree
         Root = rootNode;
     }
 
-    public static JsonTree Create(string jsonString, int maxDepth = 64)
+    public static JsonTree Parse(string jsonString, int maxDepth = 64)
     {
         var documentOptions = new JsonDocumentOptions { MaxDepth = maxDepth };
         var tree = new JsonTree(new Node("$"));

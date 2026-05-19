@@ -7,7 +7,7 @@ A .NET library for parsing JSON into a navigable tree and extracting fields via 
 Parses a JSON string into an in-memory tree where each node has a full JSONPath (e.g. `$.person.name`, `$['first name']`).
 
 ```csharp
-var tree = JsonTree.Create("""{"person":{"name":"Alice","age":30}}""");
+var tree = JsonTree.Parse("""{"person":{"name":"Alice","age":30}}""");
 
 var node = tree.FindNode("$.person.name");
 // node.Value    → "Alice"

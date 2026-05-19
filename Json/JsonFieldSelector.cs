@@ -17,7 +17,7 @@ public sealed record JsonFieldSelector
 
     public JsonFieldSelector(string jsonString)
     {
-        _tree = JsonTree.Create(jsonString);
+        _tree = JsonTree.Parse(jsonString);
     }
 
     public string Select(string pathExpression)

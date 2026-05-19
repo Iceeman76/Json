@@ -12,8 +12,8 @@ public class TreeCreate
         _jsonString = File.ReadAllText("example.json", Encoding.UTF8);
     }
 
-    [Benchmark(Description = "Tree-Create")]
-    public JsonTree Run() => JsonTree.Create(_jsonString);
+    [Benchmark(Description = "Tree-Parse")]
+    public JsonTree Run() => JsonTree.Parse(_jsonString);
 }
 
 [MemoryDiagnoser]
@@ -27,7 +27,7 @@ public abstract class JsonTreeBenchmarkBase
     {
         var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
 
-        Tree = JsonTree.Create(jsonString);
+        Tree = JsonTree.Parse(jsonString);
     }
 }
 

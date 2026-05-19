@@ -13,7 +13,7 @@ public class JsonTreeTests
     public void Large_json()
     {
         var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         using (Assert.EnterMultipleScope())
@@ -30,7 +30,7 @@ public class JsonTreeTests
                                   {"a":1,"b":true}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -52,7 +52,7 @@ public class JsonTreeTests
                                   {"person":{"name":"Alice","age":30}}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -75,7 +75,7 @@ public class JsonTreeTests
                                   {"numbers":[10,20,30]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -99,7 +99,7 @@ public class JsonTreeTests
                                   {"users":[{"id":1},{"id":2}]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -124,7 +124,7 @@ public class JsonTreeTests
                                   {"mixed":[1,"two",{"three":3}]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -149,7 +149,7 @@ public class JsonTreeTests
                                   {"first name":"Alice","123key":"value","key.with.dot":"ok"}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -170,7 +170,7 @@ public class JsonTreeTests
     {
         const string jsonString = """{"":42}""";
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         using (Assert.EnterMultipleScope())
@@ -186,7 +186,7 @@ public class JsonTreeTests
     {
         const string jsonString = """{"big":1e30,"items":[2e30]}""";
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var output = tree.ToJsonString();
 
         using var document = JsonDocument.Parse(output);
@@ -203,7 +203,7 @@ public class JsonTreeTests
     {
         const string jsonString = """{"enabled":true,"flags":[true,false]}""";
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
 
         Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
     }
@@ -213,7 +213,7 @@ public class JsonTreeTests
     {
         const string jsonString = """{"price":1.5,"prices":[2.5,3.5]}""";
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
 
         Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
     }
@@ -223,7 +223,7 @@ public class JsonTreeTests
     {
         const string jsonString = """{"value":null,"items":[null,null]}""";
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
 
         Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
     }
@@ -235,7 +235,7 @@ public class JsonTreeTests
                                   {"matrix":[[1,2],[3,4]]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -262,7 +262,7 @@ public class JsonTreeTests
                                   {"n":null,"b":false,"s":"hi","x":42}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -286,7 +286,7 @@ public class JsonTreeTests
                                   {"emptyObj":{},"emptyArr":[]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -308,7 +308,7 @@ public class JsonTreeTests
                                   {"a":{"b":{"c":[{"d":1}]}}}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
         TestContext.Progress.WriteLine(tree);
@@ -333,7 +333,7 @@ public class JsonTreeTests
                                   {"a":1,"b":true}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.a")!;
 
         using (Assert.EnterMultipleScope())
@@ -351,7 +351,7 @@ public class JsonTreeTests
                                   {"person":{"name":"Alice","age":30}}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.person.name")!;
 
         using (Assert.EnterMultipleScope())
@@ -368,7 +368,7 @@ public class JsonTreeTests
                                   {"numbers":[10,20,30]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.numbers[1]")!;
 
         using (Assert.EnterMultipleScope())
@@ -385,7 +385,7 @@ public class JsonTreeTests
                                   {"users":[{"id":1},{"id":2}]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.users[1].id")!;
 
         Assert.That(node.Value, Is.EqualTo(2));
@@ -398,7 +398,7 @@ public class JsonTreeTests
                                   {"a":{"b":{"c":[{"d":1}]}}}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.a.b.c[0].d")!;
 
         Assert.That(node.Value, Is.EqualTo(1));
@@ -411,7 +411,7 @@ public class JsonTreeTests
                                   {"first name":"Alice"}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$['first name']")!;
 
         Assert.That(node.Value, Is.EqualTo("Alice"));
@@ -424,7 +424,7 @@ public class JsonTreeTests
                                   {"Person":{"Name":"Alice"}}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.PERSON.name")!;
 
         Assert.That(node.Value, Is.EqualTo("Alice"));
@@ -437,7 +437,7 @@ public class JsonTreeTests
                                   {"person":{"name":"Alice","age":30}}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.person")!;
 
         using (Assert.EnterMultipleScope())
@@ -454,7 +454,7 @@ public class JsonTreeTests
                                   {"numbers":[10,20,30]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.numbers")!;
 
         using (Assert.EnterMultipleScope())
@@ -471,7 +471,7 @@ public class JsonTreeTests
                                   {"a":1,"b":2}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.does_not_exist");
 
         Assert.That(node, Is.Null);
@@ -484,7 +484,7 @@ public class JsonTreeTests
                                   {"a":1}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$")!;
         var nodes = node.Flatten();
 
@@ -506,7 +506,7 @@ public class JsonTreeTests
                                   {"a":1}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode(string.Empty);
 
         Assert.That(node, Is.Null);
@@ -519,7 +519,7 @@ public class JsonTreeTests
                                   {"a":{"b":1}}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.a.b.c");
 
         Assert.That(node, Is.Null);
@@ -532,7 +532,7 @@ public class JsonTreeTests
                                   {"numbers":[10,20]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.numbers[5]");
 
         Assert.That(node, Is.Null);
@@ -545,7 +545,7 @@ public class JsonTreeTests
                                   {"n":null}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.n")!;
 
         using (Assert.EnterMultipleScope())
@@ -562,7 +562,7 @@ public class JsonTreeTests
                                   {"matrix":[[1,2],[3,4]]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.matrix[1][0]")!;
 
         Assert.That(node.Value, Is.EqualTo(3));
@@ -575,7 +575,7 @@ public class JsonTreeTests
                                   {"name":"Alice"}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.name")!;
 
         Assert.That(node.ToString(), Is.EqualTo("Name = name, Value = Alice, Kind = String, JsonPath = $.name"));
@@ -588,7 +588,7 @@ public class JsonTreeTests
                                   {"a":1}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.a");
 
         Assert.That(node, Is.Not.Null);
@@ -603,7 +603,7 @@ public class JsonTreeTests
     {
         var jsonString = BuildNestedJson(65);
 
-        Assert.Catch<JsonException>(() => JsonTree.Create(jsonString));
+        Assert.Catch<JsonException>(() => JsonTree.Parse(jsonString));
     }
 
     [Test]
@@ -611,7 +611,7 @@ public class JsonTreeTests
     {
         var jsonString = BuildNestedJson(64);
 
-        Assert.That(() => JsonTree.Create(jsonString), Throws.Nothing);
+        Assert.That(() => JsonTree.Parse(jsonString), Throws.Nothing);
     }
 
     [Test]
@@ -619,7 +619,7 @@ public class JsonTreeTests
     {
         var jsonString = BuildNestedJson(10);
 
-        Assert.Catch(() => JsonTree.Create(jsonString, maxDepth: 5));
+        Assert.Catch(() => JsonTree.Parse(jsonString, maxDepth: 5));
     }
 
     [Test]
@@ -629,7 +629,7 @@ public class JsonTreeTests
                                   {"html":"<b>&hello</b>"}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var customOptions = new JsonWriterOptions { Indented = false };
 
         var output = tree.ToJsonString(customOptions);
@@ -645,7 +645,7 @@ public class JsonTreeTests
                                   {"html":"<b>"}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var strictOptions = new JsonWriterOptions { Encoder = JavaScriptEncoder.Default };
 
         var output = tree.ToJsonString(strictOptions);
@@ -660,7 +660,7 @@ public class JsonTreeTests
                                   {"first name":"Alice"}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$['first name']")!;
 
         using (Assert.EnterMultipleScope())
@@ -678,7 +678,7 @@ public class JsonTreeTests
                                   {"numbers":[10,20]}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.numbers[1]")!;
 
         using (Assert.EnterMultipleScope())
@@ -696,7 +696,7 @@ public class JsonTreeTests
                                   {"name":"Alice"}
                                   """;
 
-        var tree = JsonTree.Create(jsonString);
+        var tree = JsonTree.Parse(jsonString);
         var node = tree.FindNode("$.name")!;
 
         using (Assert.EnterMultipleScope())
