@@ -7,6 +7,7 @@ namespace Json;
 
 public sealed partial class JsonTree
 {
+    internal Node Root { get; }
     private Node[]? _flattened;
     private Dictionary<string, Node>? _index;
 
@@ -18,17 +19,13 @@ public sealed partial class JsonTree
     public static JsonTree Create(string jsonString, int maxDepth = 64)
     {
         var documentOptions = new JsonDocumentOptions { MaxDepth = maxDepth };
-
-        var rootNode = new Node("$");
-        var tree = new JsonTree(rootNode);
+        var tree = new JsonTree(new Node("$"));
 
         using var doc = JsonDocument.Parse(jsonString, documentOptions);
         tree.DoTraverse(doc.RootElement, tree.Root);
 
         return tree;
     }
-
-    internal Node Root { get; }
 
     public Node? FindNode(string jsonPath)
     {
