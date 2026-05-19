@@ -24,6 +24,14 @@ public class JsonTreeTests
     }
 
     [Test]
+    public void GetValue_with_undefined_json_element_throws()
+    {
+        var element = default(JsonElement);
+
+        Assert.Throws<JsonException>(() => element.GetValue());
+    }
+
+    [Test]
     public void Simple_flat_object()
     {
         const string jsonString = """

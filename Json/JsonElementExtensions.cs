@@ -13,7 +13,8 @@ public static class JsonElementExtensions
             JsonValueKind.False => false,
             JsonValueKind.Number when element.TryGetInt64(out var value) => value,
             JsonValueKind.Number when element.TryGetDecimal(out var value) => value,
-            JsonValueKind.Number => element.GetDouble()
+            JsonValueKind.Number => element.GetDouble(),
+            _ => throw new JsonException($"Unsupported JSON value kind: {element.ValueKind}")
         };
     }
 }
