@@ -96,6 +96,8 @@ Any field inside a projection can be aliased with `alias:path` — the source pa
 
 Field names in projections and path segments are matched **case-insensitively**.
 
+If a projection references a field that does not exist (e.g. `$.person[Qname]`), a `FieldNotFoundException` is thrown with a clear message listing the available fields, instead of failing with a `NullReferenceException`.
+
 ### Examples
 
 ```csharp
@@ -123,3 +125,42 @@ selector.Select("$[home:participants[0].name,away:participants[1].name]");
 // Negative index — emits the last participant's name
 selector.Select("$.participants[-1].name");
 ```
+
+### Working directly with UTF-8 bytes or streams
+
+`JsonFieldSelector` and `JsonTree` can be fed UTF-8 JSON directly, avoiding an intermediate `string` allocation. The selector can also write its projection straight into an `IBufferWriter<byte>`:
+
+```csharp
+ReadOnlyMemory<byte> utf8Json = ...;
+
+// Parse straight from bytes (also works with a Stream)
+var tree = JsonTree.Parse(utf8Json);
+
+// Project straight into a byte buffer
+var output = new ArrayBufferWriter<byte>();
+new JsonFieldSelector(utf8Json).Select("$.person[name]", output);
+// output.WrittenSpan now holds the UTF-8 result
+```
+
+The classic `string`-based API is unchanged and produces identical results.
+
+## WebApi
+
+`WebApi` is a small [FastEndpoints](https://fast-endpoints.com/) service that exposes the selector over HTTP.
+
+```
+GET /items
+```
+
+Returns a JSON array of items. Send an `X-Selector` header to project the response server-side:
+
+```
+GET /items
+X-Selector: $[*][name,price]
+```
+
+```json
+[{"name":"Keyboard","price":89.99},{"name":"Mouse","price":49.50},...]
+```
+
+Without the header the full payload is returned. The projection is applied by `SelectorMiddleware`, which buffers the response, parses it directly from the buffered UTF-8 bytes and writes the projected result back. If the `X-Selector` value has invalid syntax the middleware lets the exception propagate to the global exception handler (`UseDefaultExceptionHandler`) instead of silently returning the full response.

@@ -24,9 +24,14 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
         using var buffer = new MemoryStream();
         context.Response.Body = buffer;
 
-        await next(context);
-
-        context.Response.Body = originalBody;
+        try
+        {
+            await next(context);
+        }
+        finally
+        {
+            context.Response.Body = originalBody;
+        }
 
         if (IsJsonResponse(context) == false)
         {
@@ -38,23 +43,13 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
 
         var source = new ReadOnlyMemory<byte>(buffer.GetBuffer(), 0, (int)buffer.Length);
 
-        try
-        {
-            var projection = new ArrayBufferWriter<byte>();
-            new JsonFieldSelector(source).Select(selector, projection);
+        var projection = new ArrayBufferWriter<byte>();
+        new JsonFieldSelector(source).Select(selector, projection);
 
-            context.Response.ContentLength = projection.WrittenCount;
-            await originalBody.WriteAsync(projection.WrittenMemory);
+        context.Response.ContentLength = projection.WrittenCount;
+        await originalBody.WriteAsync(projection.WrittenMemory);
 
-            logger.LogInformation("Selector applied, response reduced from {OriginalBytes} to {ProjectedBytes} bytes", buffer.Length, projection.WrittenCount);
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(exception, "Failed to apply selector {Selector}, returning original response", selector);
-            buffer.Position = 0;
-            context.Response.ContentLength = buffer.Length;
-            await buffer.CopyToAsync(originalBody);
-        }
+        logger.LogInformation("Selector applied, response reduced from {OriginalBytes} to {ProjectedBytes} bytes", buffer.Length, projection.WrittenCount);
     }
 
     private static bool IsJsonResponse(HttpContext context)

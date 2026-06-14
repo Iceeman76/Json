@@ -61,15 +61,7 @@ internal static class PathExpressionWriter
             return resolved >= 0 && resolved < parent.Children.Count ? parent.Children[resolved] : null;
         }
 
-        foreach (var child in parent.Children)
-        {
-            if (string.Equals(child.Name, name, StringComparison.OrdinalIgnoreCase))
-            {
-                return child;
-            }
-        }
-
-        return null;
+        return parent.Children.FirstOrDefault(child => string.Equals(child.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool IsNegativeIndex(string name, out int index)
@@ -99,7 +91,7 @@ internal static class PathExpressionWriter
 
     private static void WriteProjectionResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, bool forceWrap, Projection projection)
     {
-        if (!forceWrap && targets.Count == 1)
+        if (forceWrap == false && targets.Count == 1)
         {
             WriteProjectedTarget(writer, targets[0], projection);
             return;
@@ -151,7 +143,8 @@ internal static class PathExpressionWriter
 
         foreach (var segment in field.Path)
         {
-            target = FindChildByName(target, segment)!;
+            var child = FindChildByName(target, segment);
+            target = child ?? throw new FieldNotFoundException(segment, target);
         }
 
         if (field.Sub is null)
@@ -164,6 +157,7 @@ internal static class PathExpressionWriter
 
             writer.WritePropertyName(field.Alias);
             writer.WriteSubTree(target);
+
             return;
         }
 
@@ -181,6 +175,7 @@ internal static class PathExpressionWriter
             }
 
             writer.WriteEndArray();
+
             return;
         }
 

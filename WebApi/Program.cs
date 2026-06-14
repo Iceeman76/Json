@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddFastEndpoints();
 
 var app = builder.Build();
+app.UseDefaultExceptionHandler();
 app.UseMiddleware<SelectorMiddleware>();
 app.UseFastEndpoints();
 app.Run();

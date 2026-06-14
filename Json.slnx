@@ -3,4 +3,5 @@
   <Project Path="Json/Json.csproj" />
   <Project Path="JsonTests/JsonTests.csproj" />
   <Project Path="WebApi/WebApi.csproj" />
+  <Project Path="WebApiTests/WebApiTests.csproj" />
 </Solution>

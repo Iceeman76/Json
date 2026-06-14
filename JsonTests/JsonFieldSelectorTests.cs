@@ -593,4 +593,34 @@ public class JsonFieldSelectorTests
 
         Assert.That(fromBuffer, Is.EqualTo(fromString));
     }
+
+    [Test]
+    public void Should_throw_field_not_found_for_unknown_field_in_projection()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+
+        var exception = Assert.Throws<FieldNotFoundException>(() => selector.Select("$.person[Qname]"));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception!.Field, Is.EqualTo("Qname"));
+            Assert.That(exception.Path, Is.EqualTo("$.person"));
+            Assert.That(exception.Message, Does.Contain("name"));
+            Assert.That(exception.Message, Does.Contain("age"));
+        }
+    }
+
+    [Test]
+    public void Should_throw_field_not_found_for_unknown_field_in_array_projection()
+    {
+        const string jsonString = """{"crew":[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+
+        var exception = Assert.Throws<FieldNotFoundException>(() => selector.Select("$.crew[id,Qname]"));
+
+        Assert.That(exception!.Field, Is.EqualTo("Qname"));
+    }
 }
