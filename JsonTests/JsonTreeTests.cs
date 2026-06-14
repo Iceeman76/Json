@@ -731,6 +731,61 @@ public class JsonTreeTests
         }
     }
 
+    [Test]
+    public void Parse_from_utf8_bytes_matches_string_parse()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30},"numbers":[10,20,30]}""";
+        var utf8Json = Encoding.UTF8.GetBytes(jsonString);
+
+        var tree = JsonTree.Parse(new ReadOnlyMemory<byte>(utf8Json));
+
+        Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+    }
+
+    [Test]
+    public void Parse_from_utf8_bytes_builds_expected_nodes()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30}}""";
+        var utf8Json = Encoding.UTF8.GetBytes(jsonString);
+
+        var tree = JsonTree.Parse(new ReadOnlyMemory<byte>(utf8Json));
+        var nodes = tree.Flatten();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(nodes[0].JsonPath, Is.EqualTo("$.person"));
+            Assert.That(nodes[1].JsonPath, Is.EqualTo("$.person.name"));
+            Assert.That(nodes[2].JsonPath, Is.EqualTo("$.person.age"));
+        }
+    }
+
+    [Test]
+    public void Parse_from_stream_matches_string_parse()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30},"numbers":[10,20,30]}""";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString));
+
+        var tree = JsonTree.Parse(stream);
+
+        Assert.That(tree.ToJsonString(), Is.EqualTo(jsonString));
+    }
+
+    [Test]
+    public void Parse_from_bytes_respects_custom_max_depth()
+    {
+        var utf8Json = Encoding.UTF8.GetBytes(BuildNestedJson(10));
+
+        Assert.Catch(() => JsonTree.Parse(new ReadOnlyMemory<byte>(utf8Json), maxDepth: 5));
+    }
+
+    [Test]
+    public void Parse_from_stream_respects_custom_max_depth()
+    {
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(BuildNestedJson(10)));
+
+        Assert.Catch(() => JsonTree.Parse(stream, maxDepth: 5));
+    }
+
     private static string BuildNestedJson(int depth)
     {
         var sb = new StringBuilder();

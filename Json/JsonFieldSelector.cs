@@ -20,10 +20,27 @@ public sealed record JsonFieldSelector
         _tree = JsonTree.Parse(jsonString);
     }
 
+    public JsonFieldSelector(ReadOnlyMemory<byte> utf8Json)
+    {
+        _tree = JsonTree.Parse(utf8Json);
+    }
+
+    public JsonFieldSelector(Stream utf8Json)
+    {
+        _tree = JsonTree.Parse(utf8Json);
+    }
+
     public string Select(string pathExpression)
     {
         var buffer = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(buffer, WriterOptions);
+        Select(pathExpression, buffer);
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    public void Select(string pathExpression, IBufferWriter<byte> output)
+    {
+        using var writer = new Utf8JsonWriter(output, WriterOptions);
 
         var fastPathNode = TryFastPathLookup(pathExpression);
 
@@ -38,8 +55,6 @@ public sealed record JsonFieldSelector
         }
 
         writer.Flush();
-
-        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
     private JsonTree.Node? TryFastPathLookup(string pathExpression)

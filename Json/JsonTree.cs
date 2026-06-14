@@ -20,9 +20,33 @@ public sealed partial class JsonTree
     public static JsonTree Parse(string jsonString, int maxDepth = 64)
     {
         var documentOptions = new JsonDocumentOptions { MaxDepth = maxDepth };
-        var tree = new JsonTree(new Node("$"));
 
         using var doc = JsonDocument.Parse(jsonString, documentOptions);
+
+        return FromDocument(doc);
+    }
+
+    public static JsonTree Parse(ReadOnlyMemory<byte> utf8Json, int maxDepth = 64)
+    {
+        var documentOptions = new JsonDocumentOptions { MaxDepth = maxDepth };
+
+        using var doc = JsonDocument.Parse(utf8Json, documentOptions);
+
+        return FromDocument(doc);
+    }
+
+    public static JsonTree Parse(Stream utf8Json, int maxDepth = 64)
+    {
+        var documentOptions = new JsonDocumentOptions { MaxDepth = maxDepth };
+
+        using var doc = JsonDocument.Parse(utf8Json, documentOptions);
+
+        return FromDocument(doc);
+    }
+
+    private static JsonTree FromDocument(JsonDocument doc)
+    {
+        var tree = new JsonTree(new Node("$"));
         tree.DoTraverse(doc.RootElement, tree.Root);
 
         return tree;

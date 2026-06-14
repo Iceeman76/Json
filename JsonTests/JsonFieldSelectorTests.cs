@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using Json;
@@ -504,5 +505,92 @@ public class JsonFieldSelectorTests
         const string expected = """{"winner":"AIK"}""";
 
         Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_select_from_utf8_byte_constructor()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30}}""";
+        var utf8Json = Encoding.UTF8.GetBytes(jsonString);
+
+        var selector = new JsonFieldSelector(new ReadOnlyMemory<byte>(utf8Json));
+        var result = selector.Select("$.person[name]");
+
+        const string expected = """{"name":"Alice"}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_array_from_utf8_byte_constructor()
+    {
+        const string jsonString = """{"crew":[{"id":1,"name":"Allan","age":50},{"id":2,"name":"Bertil","age":75}]}""";
+        var utf8Json = Encoding.UTF8.GetBytes(jsonString);
+
+        var selector = new JsonFieldSelector(new ReadOnlyMemory<byte>(utf8Json));
+        var result = selector.Select("$.crew[id,name]");
+
+        const string expected = """[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_select_from_stream_constructor()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30}}""";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString));
+
+        var selector = new JsonFieldSelector(stream);
+        var result = selector.Select("$.person[name]");
+
+        const string expected = """{"name":"Alice"}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Byte_and_string_constructors_produce_identical_results()
+    {
+        var jsonString = File.ReadAllText("example.json", Encoding.UTF8);
+        const string pathExpression = "$[id:requestId,info:draw[turnover,comment:drawComment]]";
+
+        var fromString = new JsonFieldSelector(jsonString).Select(pathExpression);
+        var fromBytes = new JsonFieldSelector(new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(jsonString))).Select(pathExpression);
+
+        Assert.That(fromBytes, Is.EqualTo(fromString));
+    }
+
+    [Test]
+    public void Should_write_projection_to_buffer_writer()
+    {
+        const string jsonString = """{"person":{"name":"Alice","age":30}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var buffer = new ArrayBufferWriter<byte>();
+        selector.Select("$.person[name]", buffer);
+
+        var result = Encoding.UTF8.GetString(buffer.WrittenSpan);
+
+        const string expected = """{"name":"Alice"}""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Buffer_writer_overload_matches_string_overload()
+    {
+        const string jsonString = """{"crew":[{"id":1,"name":"Allan","age":50},{"id":2,"name":"Bertil","age":75}]}""";
+        const string pathExpression = "$.crew[id,name]";
+
+        var selector = new JsonFieldSelector(jsonString);
+
+        var fromString = selector.Select(pathExpression);
+
+        var buffer = new ArrayBufferWriter<byte>();
+        selector.Select(pathExpression, buffer);
+        var fromBuffer = Encoding.UTF8.GetString(buffer.WrittenSpan);
+
+        Assert.That(fromBuffer, Is.EqualTo(fromString));
     }
 }
