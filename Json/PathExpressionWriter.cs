@@ -144,7 +144,13 @@ internal static class PathExpressionWriter
         foreach (var segment in field.Path)
         {
             var child = FindChildByName(target, segment);
-            target = child ?? throw new FieldNotFoundException(segment, target);
+
+            if (child is null)
+            {
+                return;
+            }
+
+            target = child;
         }
 
         if (field.Sub is null)

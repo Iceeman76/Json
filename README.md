@@ -96,7 +96,7 @@ Any field inside a projection can be aliased with `alias:path` — the source pa
 
 Field names in projections and path segments are matched **case-insensitively**.
 
-If a projection references a field that does not exist (e.g. `$.person[Qname]`), a `FieldNotFoundException` is thrown with a clear message listing the available fields, instead of failing with a `NullReferenceException`.
+If a projection references a field that does not exist in the data (e.g. `$.person[Qname]`, or a field that is omitted because its value is `null`), that field is simply skipped in the output rather than causing an error. This keeps projections robust when working with optional/nullable fields that may be absent from the serialized JSON.
 
 ### Examples
 
@@ -152,7 +152,13 @@ The classic `string`-based API is unchanged and produces identical results.
 GET /items
 ```
 
-Returns a JSON array of items. Send an `X-Selector` header to project the response server-side:
+Returns a JSON array of items (a catalog of 250). Pass an optional `limit` query parameter to cap the number of returned items:
+
+```
+GET /items?limit=10
+```
+
+Send an `X-Selector` header to project the response server-side:
 
 ```
 GET /items
@@ -164,3 +170,5 @@ X-Selector: $[*][name,price]
 ```
 
 Without the header the full payload is returned. The projection is applied by `SelectorMiddleware`, which buffers the response, parses it directly from the buffered UTF-8 bytes and writes the projected result back. If the `X-Selector` value has invalid syntax the middleware lets the exception propagate to the global exception handler (`UseDefaultExceptionHandler`) instead of silently returning the full response.
+
+`Item` has several optional (nullable) properties (`Description`, `Price`, `Quantity`, `InStock`, `CreatedAt`). The serializer is configured with `DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull`, so any property that is `null` is omitted from the response entirely rather than emitted as `"field":null`.

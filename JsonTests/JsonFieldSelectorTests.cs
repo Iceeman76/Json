@@ -595,32 +595,44 @@ public class JsonFieldSelectorTests
     }
 
     [Test]
-    public void Should_throw_field_not_found_for_unknown_field_in_projection()
+    public void Should_skip_unknown_field_in_projection()
     {
         const string jsonString = """{"person":{"name":"Alice","age":30}}""";
 
         var selector = new JsonFieldSelector(jsonString);
 
-        var exception = Assert.Throws<FieldNotFoundException>(() => selector.Select("$.person[Qname]"));
+        var result = selector.Select("$.person[name,Qname]");
 
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(exception!.Field, Is.EqualTo("Qname"));
-            Assert.That(exception.Path, Is.EqualTo("$.person"));
-            Assert.That(exception.Message, Does.Contain("name"));
-            Assert.That(exception.Message, Does.Contain("age"));
-        }
+        const string expected = """{"name":"Alice"}""";
+
+        Assert.That(result, Is.EqualTo(expected));
     }
 
     [Test]
-    public void Should_throw_field_not_found_for_unknown_field_in_array_projection()
+    public void Should_skip_unknown_field_in_array_projection()
     {
         const string jsonString = """{"crew":[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]}""";
 
         var selector = new JsonFieldSelector(jsonString);
 
-        var exception = Assert.Throws<FieldNotFoundException>(() => selector.Select("$.crew[id,Qname]"));
+        var result = selector.Select("$.crew[id,Qname]");
 
-        Assert.That(exception!.Field, Is.EqualTo("Qname"));
+        const string expected = """[{"id":1},{"id":2}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_skip_field_missing_in_some_objects_only()
+    {
+        const string jsonString = """{"crew":[{"id":1,"name":"Allan"},{"id":2}]}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+
+        var result = selector.Select("$.crew[id,name]");
+
+        const string expected = """[{"id":1,"name":"Allan"},{"id":2}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
     }
 }
