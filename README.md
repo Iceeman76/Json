@@ -152,7 +152,7 @@ The classic `string`-based API is unchanged and produces identical results.
 GET /items
 ```
 
-Returns a JSON array of items (a catalog of 250). Pass an optional `limit` query parameter to cap the number of returned items:
+Returns a JSON object of the form `{ "itemCount": <int>, "items": [ ... ] }`. Items are generated lazily on demand, so pass an optional `limit` query parameter to cap the number of returned items (defaults to 1000 when omitted):
 
 ```
 GET /items?limit=10
@@ -162,7 +162,7 @@ Send an `X-Selector` header to project the response server-side:
 
 ```
 GET /items
-X-Selector: $[*][name,price]
+X-Selector: $.items[name,price]
 ```
 
 ```json
