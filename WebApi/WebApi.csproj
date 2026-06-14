@@ -11,4 +11,8 @@
         <PackageReference Include="FastEndpoints" Version="5.35.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Json\Json.csproj"/>
+    </ItemGroup>
+
 </Project>
