@@ -1,4 +1,4 @@
-using System.Text;
+using System.Buffers;
 using Json;
 
 namespace WebApi.Selector;
@@ -36,18 +36,17 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
             return;
         }
 
-        buffer.Position = 0;
-        var json = Encoding.UTF8.GetString(buffer.ToArray());
+        var source = new ReadOnlyMemory<byte>(buffer.GetBuffer(), 0, (int)buffer.Length);
 
         try
         {
-            var projected = new JsonFieldSelector(json).Select(selector);
+            var projection = new ArrayBufferWriter<byte>();
+            new JsonFieldSelector(source).Select(selector, projection);
 
-            var projectedBytes = Encoding.UTF8.GetBytes(projected);
-            context.Response.ContentLength = projectedBytes.Length;
-            await originalBody.WriteAsync(projectedBytes);
+            context.Response.ContentLength = projection.WrittenCount;
+            await originalBody.WriteAsync(projection.WrittenMemory);
 
-            logger.LogInformation("Selector applied, response reduced from {OriginalBytes} to {ProjectedBytes} bytes", buffer.Length, projectedBytes.Length);
+            logger.LogInformation("Selector applied, response reduced from {OriginalBytes} to {ProjectedBytes} bytes", buffer.Length, projection.WrittenCount);
         }
         catch (Exception exception)
         {
