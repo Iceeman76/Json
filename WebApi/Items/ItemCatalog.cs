@@ -19,14 +19,12 @@ public static class ItemCatalog
         "Great value for money"
     ];
 
-    public static IReadOnlyList<Item> All { get; } = Generate(250);
-
-    private static IReadOnlyList<Item> Generate(int count)
+    public static IEnumerable<Item> Generate()
     {
-        var items = new List<Item>(count);
         var now = DateTime.UtcNow;
+        var index = 0;
 
-        for (var index = 0; index < count; index++)
+        while (index < int.MaxValue)
         {
             var id = index + 1;
             var name = $"{Names[index % Names.Length]} #{id}";
@@ -36,9 +34,9 @@ public static class ItemCatalog
             bool? inStock = quantity is null ? null : quantity > 0;
             DateTime? createdAt = index % 2 == 0 ? null : now.AddDays(-(index % 365));
 
-            items.Add(new Item(id, name, description, price, quantity, inStock, createdAt));
-        }
+            index++;
 
-        return items;
+            yield return new Item(id, name, description, price, quantity, inStock, createdAt);
+        }
     }
 }
