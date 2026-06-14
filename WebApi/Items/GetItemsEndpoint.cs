@@ -20,6 +20,8 @@ public sealed class GetItemsEndpoint : EndpointWithoutRequest<IReadOnlyList<Item
             new(4, "Headset", "Noise cancelling headset", 129.95m, 12, true, DateTime.UtcNow.AddDays(-2))
         };
 
+        Logger.LogInformation("Returning {ItemCount} items", items.Count);
+
         await SendAsync(items, cancellation: ct);
     }
 }
