@@ -1,15 +1,9 @@
-using System.Text.Json;
 using FastEndpoints;
-using Json;
 
 namespace WebApi.Items;
 
 public sealed class GetItemsEndpoint : EndpointWithoutRequest<IReadOnlyList<Item>>
 {
-    private const string SelectorHeaderName = "X-Selector";
-
-    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
-
     public override void Configure()
     {
         Get("/items");
@@ -26,17 +20,6 @@ public sealed class GetItemsEndpoint : EndpointWithoutRequest<IReadOnlyList<Item
             new(4, "Headset", "Noise cancelling headset", 129.95m, 12, true, DateTime.UtcNow.AddDays(-2))
         };
 
-        var selector = HttpContext.Request.Headers[SelectorHeaderName].ToString();
-
-        if (string.IsNullOrWhiteSpace(selector))
-        {
-            await SendAsync(items, cancellation: ct);
-            return;
-        }
-
-        var json = JsonSerializer.Serialize(items, SerializerOptions);
-        var projected = new JsonFieldSelector(json).Select(selector);
-
-        await SendStringAsync(projected, contentType: "application/json", cancellation: ct);
+        await SendAsync(items, cancellation: ct);
     }
 }
