@@ -172,3 +172,25 @@ X-Selector: $.items[name,price]
 Without the header the full payload is returned. The projection is applied by `SelectorMiddleware`, which buffers the response, parses it directly from the buffered UTF-8 bytes and writes the projected result back. If the `X-Selector` value has invalid syntax the middleware lets the exception propagate to the global exception handler (`UseDefaultExceptionHandler`) instead of silently returning the full response.
 
 `Item` has several optional (nullable) properties (`Description`, `Price`, `Quantity`, `InStock`, `CreatedAt`). The serializer is configured with `DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull`, so any property that is `null` is omitted from the response entirely rather than emitted as `"field":null`.
+
+## Demo
+
+`Demo` is a standalone Blazor WebAssembly client that provides an interactive playground for the selector (in the style of [try.jsoup.org](https://try.jsoup.org/)). It runs entirely in the browser and shares the selector logic by referencing the `Json` library directly.
+
+<a href="docs/demo-preview.png"><img src="docs/demo-preview.png" alt="Preview of the Demo client" width="800"></a>
+
+Run it locally with:
+
+```
+dotnet run --project Demo
+```
+
+Features:
+
+- **Live evaluation** — paste JSON, type a query, and the result updates automatically as either field changes (no "Run" button).
+- **Built-in examples** — a dropdown of progressively complex examples that demonstrate every `JsonFieldSelector` feature listed in the syntax table above, filling in both the JSON and the query.
+- **Result views** — toggle the output between syntax-highlighted JSON and the `JsonTree` text representation.
+- **JsonTree-powered highlighting** — the output is colorized by walking the parsed `JsonTree`/`Node` model rather than regex tokenizing.
+- **Hover & click paths** — hover a key/value in the output to see its JSONPath, or click it to set that path as the query.
+- **Clipboard helpers** — copy the current query and paste JSON straight into the input.
+- **Editor conveniences** — line-number gutters, Format/Prettify and Minify buttons, a live JSON validity indicator, a result counter with timing (`X matches · Y ms`), and a collapsible cheat sheet of the full syntax.
