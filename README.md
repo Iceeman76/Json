@@ -175,7 +175,7 @@ Without the header the full payload is returned. The projection is applied by `S
 
 ## Demo
 
-`Demo` is a standalone Blazor WebAssembly client that provides an interactive playground for the selector (in the style of [try.jsoup.org](https://try.jsoup.org/)). It runs entirely in the browser and shares the selector logic by referencing the `Json` library directly.
+`Demo` is a standalone Blazor WebAssembly client that provides an interactive playground for the selector. It runs entirely in the browser and shares the selector logic by referencing the `Json` library directly.
 
 <a href="docs/demo-preview.png"><img src="docs/demo-preview.png" alt="Preview of the Demo client" width="800"></a>
 
