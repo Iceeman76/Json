@@ -1,0 +1,59 @@
+@page "/"
+
+<PageTitle>JSON Selector</PageTitle>
+
+<div class="info-banner">
+    <label class="query-label" for="example-select">Samples</label>
+    <select id="example-select" class="form-select" @onchange="OnExampleSelected">
+        <option value="">Choose an example…</option>
+        @foreach (var example in Examples)
+        {
+            <option value="@example.Name">@example.Name</option>
+        }
+    </select>
+</div>
+
+<section class="panel select-panel">
+    <div class="panel-body">
+        <div class="d-flex gap-2 align-items-center">
+            <span class="query-label">Query</span>
+            <input id="selector-input" class="form-control font-monospace"
+                   @bind="SelectorInput" @bind:event="oninput" @bind:after="ApplySelector"
+                   placeholder="$.items" />
+            <button class="btn btn-secondary" @onclick="ClearInputs">Clear</button>
+        </div>
+    </div>
+</section>
+
+<div class="editor-row">
+    <div class="editor-col">
+        <section class="panel">
+            <div class="panel-header">JSON Data</div>
+            <div class="panel-body">
+                <textarea id="json-input" class="form-control font-monospace"
+                          @bind="JsonInput" @bind:event="oninput" @bind:after="ApplySelector"
+                          placeholder='{ "name": "Junie", "items": [1, 2, 3] }'></textarea>
+            </div>
+        </section>
+    </div>
+    <div class="editor-col">
+        <section class="panel">
+            <div class="panel-header d-flex justify-content-between align-items-center">
+                <span>Query Result</span>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button"
+                            class="btn @(View == ResultView.Json ? "btn-primary" : "btn-secondary")"
+                            @onclick="() => SetView(ResultView.Json)">JSON</button>
+                    <button type="button"
+                            class="btn @(View == ResultView.Tree ? "btn-primary" : "btn-secondary")"
+                            @onclick="() => SetView(ResultView.Tree)">Tree</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <textarea id="result-output"
+                          class="form-control font-monospace @(ErrorMessage is not null ? "output-error" : "")"
+                          readonly>@OutputText</textarea>
+            </div>
+        </section>
+    </div>
+</div>

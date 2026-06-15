@@ -1,0 +1,256 @@
+using Json;
+using Microsoft.AspNetCore.Components;
+
+namespace Demo.Pages;
+
+public partial class Selector
+{
+    private string JsonInput { get; set; } = "";
+    private string SelectorInput { get; set; } = "";
+    private string Result { get; set; } = "";
+    private string? ErrorMessage { get; set; }
+
+    private enum ResultView
+    {
+        Json,
+        Tree
+    }
+
+    private ResultView View { get; set; } = ResultView.Json;
+
+    private string OutputText
+    {
+        get
+        {
+            if (ErrorMessage is not null)
+            {
+                return ErrorMessage;
+            }
+
+            if (string.IsNullOrEmpty(Result) || View == ResultView.Json)
+            {
+                return Result;
+            }
+
+            try
+            {
+                return JsonTree.Parse(Result).ToString();
+            }
+            catch
+            {
+                return Result;
+            }
+        }
+    }
+
+    private void SetView(ResultView view) => View = view;
+
+    private record Example(string Name, string Json, string Selector);
+
+    private static readonly Example[] Examples =
+    [
+        new("Entire document",
+            """
+            {
+              "name": "Junie",
+              "age": 3
+            }
+            """,
+            "$"),
+        new("Property access",
+            """
+            {
+              "name": "Junie",
+              "age": 3
+            }
+            """,
+            "$.name"),
+        new("Nested property",
+            """
+            {
+              "user": {
+                "name": "Ada",
+                "city": "Stockholm"
+              }
+            }
+            """,
+            "$.user.city"),
+        new("Array index",
+            """
+            {
+              "items": [10, 20, 30]
+            }
+            """,
+            "$.items[0]"),
+        new("Negative index",
+            """
+            {
+              "items": [10, 20, 30]
+            }
+            """,
+            "$.items[-1]"),
+        new("Property in array element",
+            """
+            {
+              "users": [
+                { "name": "Ada" },
+                { "name": "Bob" }
+              ]
+            }
+            """,
+            "$.users[1].name"),
+        new("Nested arrays",
+            """
+            {
+              "matrix": [[1, 2], [3, 4]]
+            }
+            """,
+            "$.matrix[1][0]"),
+        new("All properties (wildcard)",
+            """
+            {
+              "name": "Ada",
+              "age": 30
+            }
+            """,
+            "$.*"),
+        new("Property from all elements",
+            """
+            {
+              "users": [
+                { "name": "Ada" },
+                { "name": "Bob" }
+              ]
+            }
+            """,
+            "$.users[*].name"),
+        new("Chained wildcards",
+            """
+            {
+              "teams": [
+                { "players": [{ "name": "Ada" }, { "name": "Bob" }] },
+                { "players": [{ "name": "Cy" }] }
+              ]
+            }
+            """,
+            "$.teams[*].players[*].name"),
+        new("Field projection",
+            """
+            {
+              "person": {
+                "name": "Ada",
+                "age": 30,
+                "ssn": "secret"
+              }
+            }
+            """,
+            "$.person[name,age]"),
+        new("Root projection",
+            """
+            {
+              "name": "Ada",
+              "age": 30,
+              "ssn": "secret"
+            }
+            """,
+            "$[name,age]"),
+        new("Field alias",
+            """
+            {
+              "name": "Ada",
+              "age": 30
+            }
+            """,
+            "$[displayName:name,age]"),
+        new("Alias on dotted path",
+            """
+            {
+              "events": [
+                { "name": "A", "league": { "name": "Premier" } },
+                { "name": "B", "league": { "name": "Championship" } }
+              ]
+            }
+            """,
+            "$.events[name,league:league.name]"),
+        new("Indexed access in projection",
+            """
+            {
+              "participants": [
+                { "name": "KHK" },
+                { "name": "FBK" }
+              ]
+            }
+            """,
+            "$[home:participants[0].name,away:participants[1].name]"),
+        new("Projection over array",
+            """
+            {
+              "books": [
+                { "title": "A", "price": 100, "isbn": "x1" },
+                { "title": "B", "price": 150, "isbn": "x2" }
+              ]
+            }
+            """,
+            "$.books[*][title,price]"),
+        new("Nested sub-projection",
+            """
+            {
+              "order": {
+                "id": 7,
+                "customer": {
+                  "name": "Ada",
+                  "email": "ada@example.com",
+                  "phone": "123"
+                }
+              }
+            }
+            """,
+            "$.order[id,customer[name,email]]")
+    ];
+
+    private void OnExampleSelected(ChangeEventArgs e)
+    {
+        var name = e.Value?.ToString();
+        var example = Examples.FirstOrDefault(x => x.Name == name);
+
+        if (example is null)
+        {
+            ClearInputs();
+            return;
+        }
+
+        JsonInput = example.Json;
+        SelectorInput = example.Selector;
+
+        ApplySelector();
+    }
+
+    private void ClearInputs()
+    {
+        JsonInput = "";
+        SelectorInput = "";
+        Result = "";
+        ErrorMessage = null;
+    }
+
+    private void ApplySelector()
+    {
+        ErrorMessage = null;
+        Result = "";
+
+        if (string.IsNullOrWhiteSpace(JsonInput) || string.IsNullOrWhiteSpace(SelectorInput))
+        {
+            return;
+        }
+
+        try
+        {
+            var fieldSelector = new JsonFieldSelector(JsonInput);
+            Result = fieldSelector.Select(SelectorInput);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+}
