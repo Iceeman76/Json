@@ -1,3 +1,8 @@
+using System.Globalization;
+using System.Net;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using Json;
 using Microsoft.AspNetCore.Components;
 
@@ -44,6 +49,157 @@ public partial class Selector
     }
 
     private void SetView(ResultView view) => View = view;
+
+    private MarkupString HighlightedOutput => (MarkupString)HighlightJson(OutputText);
+
+    private static readonly JsonSerializerOptions StringLiteralOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private string HighlightJson(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return "";
+        }
+
+        if (ErrorMessage is not null || View == ResultView.Tree)
+        {
+            return WebUtility.HtmlEncode(text);
+        }
+
+        try
+        {
+            var root = JsonTree.Parse(text).FindNode("$");
+
+            if (root is null)
+            {
+                return WebUtility.HtmlEncode(text);
+            }
+
+            var sb = new StringBuilder(text.Length + 64);
+            RenderNode(root, sb, 0);
+
+            return sb.ToString();
+        }
+        catch
+        {
+            return WebUtility.HtmlEncode(text);
+        }
+    }
+
+    private void RenderNode(JsonTree.Node node, StringBuilder sb, int indent)
+    {
+        switch (node.Kind)
+        {
+            case JsonValueKind.Object:
+                RenderObject(node, sb, indent);
+                break;
+            case JsonValueKind.Array:
+                RenderArray(node, sb, indent);
+                break;
+            default:
+                RenderScalar(node, sb);
+                break;
+        }
+    }
+
+    private void RenderObject(JsonTree.Node node, StringBuilder sb, int indent)
+    {
+        if (node.Children.Count == 0)
+        {
+            sb.Append("{}");
+            return;
+        }
+
+        sb.AppendLine("{");
+
+        for (var i = 0; i < node.Children.Count; i++)
+        {
+            var child = node.Children[i];
+            AppendIndent(sb, indent + 1);
+            sb.Append("<span class=\"tok-key\">")
+                .Append(WebUtility.HtmlEncode(ToJsonStringLiteral(child.Name)))
+                .Append("</span>: ");
+            RenderNode(child, sb, indent + 1);
+
+            if (i < node.Children.Count - 1)
+            {
+                sb.Append(',');
+            }
+
+            sb.AppendLine();
+        }
+
+        AppendIndent(sb, indent);
+        sb.Append('}');
+    }
+
+    private void RenderArray(JsonTree.Node node, StringBuilder sb, int indent)
+    {
+        if (node.Children.Count == 0)
+        {
+            sb.Append("[]");
+            return;
+        }
+
+        sb.AppendLine("[");
+
+        for (var i = 0; i < node.Children.Count; i++)
+        {
+            AppendIndent(sb, indent + 1);
+            RenderNode(node.Children[i], sb, indent + 1);
+
+            if (i < node.Children.Count - 1)
+            {
+                sb.Append(',');
+            }
+
+            sb.AppendLine();
+        }
+
+        AppendIndent(sb, indent);
+        sb.Append(']');
+    }
+
+    private static void RenderScalar(JsonTree.Node node, StringBuilder sb)
+    {
+        switch (node.Kind)
+        {
+            case JsonValueKind.String:
+                sb.Append("<span class=\"tok-string\">")
+                    .Append(WebUtility.HtmlEncode(ToJsonStringLiteral(node.Value as string ?? "")))
+                    .Append("</span>");
+                break;
+            case JsonValueKind.Number:
+                sb.Append("<span class=\"tok-number\">")
+                    .Append(FormatNumber(node.Value))
+                    .Append("</span>");
+                break;
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                sb.Append("<span class=\"tok-bool\">")
+                    .Append(node.Kind == JsonValueKind.True ? "true" : "false")
+                    .Append("</span>");
+                break;
+            default:
+                sb.Append("<span class=\"tok-null\">null</span>");
+                break;
+        }
+    }
+
+    private static void AppendIndent(StringBuilder sb, int indent) => sb.Append(' ', indent * 2);
+    private static string ToJsonStringLiteral(string value) => JsonSerializer.Serialize(value, StringLiteralOptions);
+
+    private static string FormatNumber(object? value) => value switch
+    {
+        long l => l.ToString(CultureInfo.InvariantCulture),
+        decimal d => d.ToString(CultureInfo.InvariantCulture),
+        double db => db.ToString(CultureInfo.InvariantCulture),
+        IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+        _ => WebUtility.HtmlEncode(value?.ToString() ?? "0")
+    };
 
     private record Example(string Name, string Json, string Selector);
 

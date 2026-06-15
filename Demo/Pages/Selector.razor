@@ -50,9 +50,8 @@
                 </div>
             </div>
             <div class="panel-body">
-                <textarea id="result-output"
-                          class="form-control font-monospace @(ErrorMessage is not null ? "output-error" : "")"
-                          readonly>@OutputText</textarea>
+                <pre id="result-output"
+                     class="form-control font-monospace json-output @(ErrorMessage is not null ? "output-error" : "")">@HighlightedOutput</pre>
             </div>
         </section>
     </div>
