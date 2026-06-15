@@ -67,30 +67,54 @@
     display: flex;
 }
 
-    .panel-body textarea {
-        flex: 1;
-        min-height: 0;
-        resize: none;
-    }
+/* Line-numbered code editors (input/output) */
+.code-wrap {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    min-width: 0;
+    border: 1px solid #2d3e4f;
+    border-radius: 6px;
+    background-color: #0e1924;
+    overflow: hidden;
+}
 
-    .panel-body textarea.output-error {
-        color: #f0a3a3;
-        border-color: #a35050;
-    }
+.line-gutter {
+    flex: 0 0 auto;
+    overflow: hidden;
+    text-align: right;
+    padding: 0.5rem 0.5rem;
+    color: #5b6b7d;
+    background-color: #16222e;
+    border-right: 1px solid #2d3e4f;
+    white-space: pre;
+    user-select: none;
+    font-family: var(--bs-font-monospace, monospace);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
 
-    .panel-body .json-output {
+    .code-wrap textarea,
+    .code-wrap .json-output {
         flex: 1;
         min-height: 0;
         min-width: 0;
         margin: 0;
-        overflow: auto;
+        border: none !important;
+        border-radius: 0 !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        font-size: 0.875rem;
+        line-height: 1.5;
         white-space: pre;
+        overflow: auto;
+        resize: none;
         color: #c3c8d4;
     }
 
-    .panel-body .json-output.output-error {
+    .code-wrap textarea.output-error,
+    .code-wrap .json-output.output-error {
         color: #f0a3a3;
-        border-color: #a35050;
     }
 
 .json-output ::deep span[title] {
@@ -122,6 +146,85 @@
     font-weight: 600;
     white-space: nowrap;
 }
+
+/* JSON validity indicator dot */
+.validity {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: transparent;
+    display: inline-block;
+}
+
+    .validity.valid {
+        background-color: #98c379;
+    }
+
+    .validity.invalid {
+        background-color: #e06c75;
+    }
+
+/* Result counter / timing */
+.result-meta {
+    color: #8a97a8;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+/* Format / Minify toolbar buttons */
+.json-tool-btn {
+    flex: 0 0 auto;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.8rem;
+}
+
+/* Cheat sheet panel */
+.cheat-toggle {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.cheat-sheet {
+    background-color: #1b2a3a;
+    border: 1px solid #2d3e4f;
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+    max-height: 240px;
+    overflow: auto;
+}
+
+.cheat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+    .cheat-table th,
+    .cheat-table td {
+        text-align: left;
+        padding: 0.4rem 0.75rem;
+        border-bottom: 1px solid #2d3e4f;
+    }
+
+    .cheat-table th {
+        color: #7ea6cc;
+        position: sticky;
+        top: 0;
+        background-color: #16273a;
+    }
+
+    .cheat-table tbody tr {
+        cursor: pointer;
+    }
+
+        .cheat-table tbody tr:hover {
+            background-color: #22344a;
+        }
+
+    .cheat-table code {
+        color: #98c379;
+        background: transparent;
+    }
 
 .select-panel .panel-body {
     display: block;

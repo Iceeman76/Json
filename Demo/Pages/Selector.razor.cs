@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -20,6 +21,113 @@ public partial class Selector
     private string? ErrorMessage { get; set; }
     private bool QueryCopied { get; set; }
     private CancellationTokenSource? _copyResetCts;
+
+    private bool? JsonValid { get; set; }
+    private double? ElapsedMs { get; set; }
+    private int ResultCount { get; set; }
+    private bool ShowCheatSheet { get; set; }
+    private bool _guttersRegistered;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_guttersRegistered)
+        {
+            await Js.InvokeVoidAsync("lineNumbers.register", "json-input", "json-gutter");
+            await Js.InvokeVoidAsync("lineNumbers.register", "result-output", "output-gutter");
+            _guttersRegistered = true;
+        }
+    }
+
+    private MarkupString InputGutter => BuildGutter(CountLines(JsonInput));
+    private MarkupString OutputGutter => BuildGutter(CountLines(HighlightJson(OutputText)));
+
+    private static int CountLines(string text) => string.IsNullOrEmpty(text) ? 1 : text.Split('\n').Length;
+
+    private static MarkupString BuildGutter(int lines)
+    {
+        var sb = new StringBuilder(lines * 3);
+
+        for (var i = 1; i <= lines; i++)
+        {
+            sb.Append(i).AppendLine();
+        }
+
+        return (MarkupString)sb.ToString();
+    }
+
+    private string ResultMeta
+    {
+        get
+        {
+            if (ErrorMessage is not null || string.IsNullOrEmpty(Result))
+            {
+                return "";
+            }
+
+            var matches = ResultCount == 1 ? "1 match" : $"{ResultCount} matches";
+            var ms = ElapsedMs is { } e ? $" · {e.ToString("0.00", CultureInfo.InvariantCulture)} ms" : "";
+
+            return matches + ms;
+        }
+    }
+
+    private void FormatJson() => ReformatJson(indent: true);
+    private void MinifyJson() => ReformatJson(indent: false);
+
+    private void ReformatJson(bool indent)
+    {
+        if (string.IsNullOrWhiteSpace(JsonInput))
+        {
+            return;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(JsonInput);
+            JsonInput = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
+            {
+                WriteIndented = indent,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        ApplySelector();
+    }
+
+    private void ToggleCheatSheet() => ShowCheatSheet = !ShowCheatSheet;
+
+    private void ApplyCheatExpression(string expression)
+    {
+        SelectorInput = expression;
+        ApplySelector();
+    }
+
+    private record CheatRow(string Expression, string Description);
+
+    private static readonly CheatRow[] CheatSheet =
+    [
+        new("$", "Entire document"),
+        new("$.a.b", "Scalar value or sub-object at path"),
+        new("$.items[*].name", "Array of name values from every element"),
+        new("$.items.*", "Array of all property values of an object"),
+        new("$.a[*].b[*].c", "Chained wildcards across nested arrays"),
+        new("$.person[name,age]", "Object projected to the listed fields only"),
+        new("$[name,age]", "Projection from the root object"),
+        new("$.items[*][id,name]", "Array of projected objects"),
+        new("$.items[id,name]", "Same as above — [*] is inferred when the target is an array"),
+        new("$.order[id,customer[name,email]]", "Nested sub-projection inside an object"),
+        new("$[id,user[name,posts[title,date]]]", "Sub-projection at any depth, including arrays nested inside objects"),
+        new("$.events[description,league.name]", "Dotted path inside a projection — descends into nested objects"),
+        new("$.events[description,league:league.name]", "Renames the projected field — emits as league instead of name"),
+        new("$.participants[0]", "Specific array element by index"),
+        new("$.participants[-1]", "Negative index — counted from the end (-1 is the last element)"),
+        new("$.matrix[1][0]", "Chained indices in nested arrays"),
+        new("$[home:participants[0].name]", "Indexed access inside a projection field, typically combined with an alias")
+    ];
 
     private async Task CopyQuery()
     {
@@ -462,12 +570,19 @@ public partial class Selector
         SelectorInput = "";
         Result = "";
         ErrorMessage = null;
+        ElapsedMs = null;
+        ResultCount = 0;
+        JsonValid = null;
     }
 
     private void ApplySelector()
     {
         ErrorMessage = null;
         Result = "";
+        ElapsedMs = null;
+        ResultCount = 0;
+
+        UpdateJsonValidity();
 
         if (string.IsNullOrWhiteSpace(JsonInput) || string.IsNullOrWhiteSpace(SelectorInput))
         {
@@ -476,12 +591,60 @@ public partial class Selector
 
         try
         {
+            var stopwatch = Stopwatch.StartNew();
             var fieldSelector = new JsonFieldSelector(JsonInput);
             Result = fieldSelector.Select(SelectorInput);
+            stopwatch.Stop();
+
+            ElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+            ResultCount = CountMatches(Result);
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+    }
+
+    private void UpdateJsonValidity()
+    {
+        if (string.IsNullOrWhiteSpace(JsonInput))
+        {
+            JsonValid = null;
+            return;
+        }
+
+        try
+        {
+            JsonTree.Parse(JsonInput);
+            JsonValid = true;
+        }
+        catch
+        {
+            JsonValid = false;
+        }
+    }
+
+    private static int CountMatches(string json)
+    {
+        if (string.IsNullOrEmpty(json))
+        {
+            return 0;
+        }
+
+        try
+        {
+            var root = JsonTree.Parse(json).FindNode("$");
+
+            if (root is null)
+            {
+                return 0;
+            }
+
+            return root.Kind == JsonValueKind.Array ? root.Children.Count : 1;
+        }
+        catch
+        {
+            return 0;
         }
     }
 }

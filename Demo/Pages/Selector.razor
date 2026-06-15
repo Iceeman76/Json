@@ -11,7 +11,33 @@
             <option value="@example.Name">@example.Name</option>
         }
     </select>
+    <button class="btn btn-secondary cheat-toggle" type="button" @onclick="ToggleCheatSheet">
+        @(ShowCheatSheet ? "Hide cheat sheet" : "Cheat sheet")
+    </button>
 </div>
+
+@if (ShowCheatSheet)
+{
+    <div class="cheat-sheet">
+        <table class="cheat-table">
+            <thead>
+                <tr>
+                    <th>Expression</th>
+                    <th>Returns</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in CheatSheet)
+                {
+                    <tr @onclick="() => ApplyCheatExpression(row.Expression)">
+                        <td><code>@row.Expression</code></td>
+                        <td>@row.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 <section class="panel select-panel">
     <div class="panel-body">
@@ -19,6 +45,7 @@
             <span class="query-label">Query</span>
             <input id="selector-input" class="form-control font-monospace"
                    @bind="SelectorInput" @bind:event="oninput" @bind:after="ApplySelector"
+                   autocomplete="off"
                    placeholder="$.items" />
             <button class="btn btn-secondary copy-btn @(QueryCopied ? "copied" : "")"
                     type="button"
@@ -53,7 +80,16 @@
     <div class="editor-col">
         <section class="panel">
             <div class="panel-header d-flex justify-content-between align-items-center">
-                <span>JSON Data</span>
+                <span class="d-flex align-items-center gap-2">
+                    <span>JSON Data</span>
+                    <span class="validity @(JsonValid == true ? "valid" : JsonValid == false ? "invalid" : "")"
+                          title="@(JsonValid == true ? "Valid JSON" : JsonValid == false ? "Invalid JSON" : "")"></span>
+                </span>
+                <span class="d-flex align-items-center gap-1">
+                <button class="btn btn-secondary json-tool-btn" type="button" title="Format JSON"
+                        @onclick="FormatJson">Format</button>
+                <button class="btn btn-secondary json-tool-btn" type="button" title="Minify JSON"
+                        @onclick="MinifyJson">Minify</button>
                 <button class="btn btn-secondary copy-btn @(JsonPasted ? "copied" : "")"
                         type="button"
                         title="Paste JSON"
@@ -77,18 +113,28 @@
                         </svg>
                     }
                 </button>
+                </span>
             </div>
             <div class="panel-body">
-                <textarea id="json-input" class="form-control font-monospace"
-                          @bind="JsonInput" @bind:event="oninput" @bind:after="ApplySelector"
-                          placeholder='{ "name": "Junie", "items": [1, 2, 3] }'></textarea>
+                <div class="code-wrap">
+                    <div id="json-gutter" class="line-gutter">@InputGutter</div>
+                    <textarea id="json-input" class="form-control font-monospace"
+                              @bind="JsonInput" @bind:event="oninput" @bind:after="ApplySelector"
+                              placeholder='{ "name": "Junie", "items": [1, 2, 3] }'></textarea>
+                </div>
             </div>
         </section>
     </div>
     <div class="editor-col">
         <section class="panel">
             <div class="panel-header d-flex justify-content-between align-items-center">
-                <span>Query Result</span>
+                <span class="d-flex align-items-center gap-2">
+                    <span>Query Result</span>
+                    @if (!string.IsNullOrEmpty(ResultMeta))
+                    {
+                        <span class="result-meta">@ResultMeta</span>
+                    }
+                </span>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button"
                             class="btn @(View == ResultView.Json ? "btn-primary" : "btn-secondary")"
@@ -99,8 +145,11 @@
                 </div>
             </div>
             <div class="panel-body">
-                <pre id="result-output"
-                     class="form-control font-monospace json-output @(ErrorMessage is not null ? "output-error" : "")">@HighlightedOutput</pre>
+                <div class="code-wrap">
+                    <div id="output-gutter" class="line-gutter">@OutputGutter</div>
+                    <pre id="result-output"
+                         class="form-control font-monospace json-output @(ErrorMessage is not null ? "output-error" : "")">@HighlightedOutput</pre>
+                </div>
             </div>
         </section>
     </div>
