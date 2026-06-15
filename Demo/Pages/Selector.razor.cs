@@ -5,15 +5,86 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using Json;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace Demo.Pages;
 
 public partial class Selector
 {
+    [Inject]
+    private IJSRuntime Js { get; set; } = null!;
+
     private string JsonInput { get; set; } = "";
-    private string SelectorInput { get; set; } = "";
+    private string SelectorInput { get; set; } = "$";
     private string Result { get; set; } = "";
     private string? ErrorMessage { get; set; }
+    private bool QueryCopied { get; set; }
+    private CancellationTokenSource? _copyResetCts;
+
+    private async Task CopyQuery()
+    {
+        if (string.IsNullOrEmpty(SelectorInput))
+        {
+            return;
+        }
+
+        var copied = await Js.InvokeAsync<bool>("clipboardCopy.copyText", SelectorInput);
+
+        if (!copied)
+        {
+            return;
+        }
+
+        QueryCopied = true;
+
+        _copyResetCts?.Cancel();
+        _copyResetCts = new CancellationTokenSource();
+        var token = _copyResetCts.Token;
+
+        try
+        {
+            await Task.Delay(1500, token);
+            QueryCopied = false;
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+            // A newer copy started; ignore.
+        }
+    }
+
+    private bool JsonPasted { get; set; }
+    private CancellationTokenSource? _pasteResetCts;
+
+    private async Task PasteJson()
+    {
+        var text = await Js.InvokeAsync<string?>("clipboardCopy.readText");
+
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+
+        JsonInput = text;
+        ApplySelector();
+
+        JsonPasted = true;
+
+        _pasteResetCts?.Cancel();
+        _pasteResetCts = new CancellationTokenSource();
+        var token = _pasteResetCts.Token;
+
+        try
+        {
+            await Task.Delay(1500, token);
+            JsonPasted = false;
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+            // A newer paste started; ignore.
+        }
+    }
 
     private enum ResultView
     {

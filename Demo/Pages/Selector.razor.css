@@ -30,6 +30,7 @@
     flex: 1;
     display: flex;
     min-height: 0;
+    min-width: 0;
 }
 
 .panel {
@@ -41,6 +42,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    min-width: 0;
 }
 
 .select-panel {
@@ -61,6 +63,7 @@
     padding: 0.5rem 1rem 1rem;
     flex: 1;
     min-height: 0;
+    min-width: 0;
     display: flex;
 }
 
@@ -78,6 +81,7 @@
     .panel-body .json-output {
         flex: 1;
         min-height: 0;
+        min-width: 0;
         margin: 0;
         overflow: auto;
         white-space: pre;
@@ -133,3 +137,20 @@
     min-width: 0;
     width: auto;
 }
+
+.copy-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375rem 0.6rem;
+}
+
+    .copy-btn svg {
+        display: block;
+    }
+
+    .copy-btn.copied {
+        color: #98c379;
+        border-color: #98c379;
+    }

@@ -20,6 +20,30 @@
             <input id="selector-input" class="form-control font-monospace"
                    @bind="SelectorInput" @bind:event="oninput" @bind:after="ApplySelector"
                    placeholder="$.items" />
+            <button class="btn btn-secondary copy-btn @(QueryCopied ? "copied" : "")"
+                    type="button"
+                    title="Copy query"
+                    aria-label="Copy query"
+                    disabled="@(string.IsNullOrEmpty(SelectorInput))"
+                    @onclick="CopyQuery">
+                @if (QueryCopied)
+                {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                }
+                else
+                {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                }
+            </button>
             <button class="btn btn-secondary" @onclick="ClearInputs">Clear</button>
         </div>
     </div>
@@ -28,7 +52,32 @@
 <div class="editor-row">
     <div class="editor-col">
         <section class="panel">
-            <div class="panel-header">JSON Data</div>
+            <div class="panel-header d-flex justify-content-between align-items-center">
+                <span>JSON Data</span>
+                <button class="btn btn-secondary copy-btn @(JsonPasted ? "copied" : "")"
+                        type="button"
+                        title="Paste JSON"
+                        aria-label="Paste JSON"
+                        @onclick="PasteJson">
+                    @if (JsonPasted)
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg>
+                    }
+                </button>
+            </div>
             <div class="panel-body">
                 <textarea id="json-input" class="form-control font-monospace"
                           @bind="JsonInput" @bind:event="oninput" @bind:after="ApplySelector"
