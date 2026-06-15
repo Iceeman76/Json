@@ -119,7 +119,9 @@ public partial class Selector
         {
             var child = node.Children[i];
             AppendIndent(sb, indent + 1);
-            sb.Append("<span class=\"tok-key\">")
+            sb.Append("<span class=\"tok-key\" title=\"")
+                .Append(WebUtility.HtmlEncode(child.JsonPath))
+                .Append("\">")
                 .Append(WebUtility.HtmlEncode(ToJsonStringLiteral(child.Name)))
                 .Append("</span>: ");
             RenderNode(child, sb, indent + 1);
@@ -165,26 +167,28 @@ public partial class Selector
 
     private static void RenderScalar(JsonTree.Node node, StringBuilder sb)
     {
+        var title = WebUtility.HtmlEncode(node.JsonPath);
+
         switch (node.Kind)
         {
             case JsonValueKind.String:
-                sb.Append("<span class=\"tok-string\">")
+                sb.Append("<span class=\"tok-string\" title=\"").Append(title).Append("\">")
                     .Append(WebUtility.HtmlEncode(ToJsonStringLiteral(node.Value as string ?? "")))
                     .Append("</span>");
                 break;
             case JsonValueKind.Number:
-                sb.Append("<span class=\"tok-number\">")
+                sb.Append("<span class=\"tok-number\" title=\"").Append(title).Append("\">")
                     .Append(FormatNumber(node.Value))
                     .Append("</span>");
                 break;
             case JsonValueKind.True:
             case JsonValueKind.False:
-                sb.Append("<span class=\"tok-bool\">")
+                sb.Append("<span class=\"tok-bool\" title=\"").Append(title).Append("\">")
                     .Append(node.Kind == JsonValueKind.True ? "true" : "false")
                     .Append("</span>");
                 break;
             default:
-                sb.Append("<span class=\"tok-null\">null</span>");
+                sb.Append("<span class=\"tok-null\" title=\"").Append(title).Append("\">null</span>");
                 break;
         }
     }

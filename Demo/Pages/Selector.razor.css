@@ -89,6 +89,10 @@
         border-color: #a35050;
     }
 
+.json-output ::deep span[title] {
+    cursor: help;
+}
+
 .json-output ::deep .tok-key {
     color: #7ea6cc;
 }
