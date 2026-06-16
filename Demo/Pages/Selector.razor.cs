@@ -55,6 +55,21 @@ public partial class Selector
         return (MarkupString)sb.ToString();
     }
 
+    private string JsonSizeMeta
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(JsonInput))
+            {
+                return "";
+            }
+
+            var bytes = Encoding.UTF8.GetByteCount(JsonInput);
+
+            return bytes == 1 ? "1 byte" : $"{bytes.ToString("#,0", CultureInfo.InvariantCulture)} bytes";
+        }
+    }
+
     private string ResultMeta
     {
         get
@@ -114,6 +129,9 @@ public partial class Selector
         new("$.a.b", "Scalar value or sub-object at path"),
         new("$.items[*].name", "Array of name values from every element"),
         new("$.items.*", "Array of all property values of an object"),
+        new("$..name", "Recursive descent — every name property at any depth (always an array)"),
+        new("$..events[number,name]", "Recursive descent with a trailing projection per matched node"),
+        new("$..books[*][title,price]", "Projection over recursive descent — flattens every matched array and projects each element"),
         new("$.a[*].b[*].c", "Chained wildcards across nested arrays"),
         new("$.person[name,age]", "Object projected to the listed fields only"),
         new("$[name,age]", "Projection from the root object"),
@@ -544,7 +562,39 @@ public partial class Selector
               }
             }
             """,
-            "$.order[id,customer[name,email]]")
+            "$.order[id,customer[name,email]]"),
+        new("Recursive descent",
+            """
+            {
+              "store": {
+                "price": 100,
+                "book": {
+                  "title": "JSON Basics",
+                  "price": 20,
+                  "details": { "price": 5 }
+                },
+                "bicycle": { "price": 200 }
+              }
+            }
+            """,
+            "$..price"),
+        new("Projection over recursive descent",
+            """
+            {
+              "store": {
+                "books": [
+                  { "title": "A", "price": 100, "isbn": "x1" },
+                  { "title": "B", "price": 150, "isbn": "x2" }
+                ],
+                "warehouse": {
+                  "books": [
+                    { "title": "C", "price": 50, "isbn": "x3" }
+                  ]
+                }
+              }
+            }
+            """,
+            "$..books[*][title,price]")
     ];
 
     private void OnExampleSelected(ChangeEventArgs e)
@@ -561,6 +611,7 @@ public partial class Selector
         JsonInput = example.Json;
         SelectorInput = example.Selector;
 
+        ReformatJson(indent: true);
         ApplySelector();
     }
 

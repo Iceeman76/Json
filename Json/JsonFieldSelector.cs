@@ -64,9 +64,16 @@ public sealed record JsonFieldSelector
 
     private static bool HasProjectionOrWildcard(string pathExpression)
     {
-        foreach (var c in pathExpression)
+        for (var i = 0; i < pathExpression.Length; i++)
         {
+            var c = pathExpression[i];
+
             if (c is '[' or '*' or ',' or ':')
+            {
+                return true;
+            }
+
+            if (c == '.' && i + 1 < pathExpression.Length && pathExpression[i + 1] == '.')
             {
                 return true;
             }

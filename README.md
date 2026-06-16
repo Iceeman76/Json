@@ -76,6 +76,9 @@ var result   = selector.Select("$.person.name");
 | `$.a.b` | Scalar value or sub-object at path |
 | `$.items[*].name` | Array of `name` values from every element |
 | `$.items.*` | Array of all property values of an object |
+| `$..name` | Recursive descent — array of every `name` property at any depth (nodelist) |
+| `$..events[number,name]` | Recursive descent with a trailing projection applied to each matched node |
+| `$..books[*][title,price]` | Projection over recursive descent — flattens every matched array and projects each element |
 | `$.a[*].b[*].c` | Chained wildcards across nested arrays |
 | `$.person[name,age]` | Object projected to the listed fields only |
 | `$[name,age]` | Projection from the root object |
@@ -95,6 +98,8 @@ Projections compose to arbitrary depth: each inner field may itself be plain, `f
 Any field inside a projection can be aliased with `alias:path` — the source path resolves normally and the emitted property name becomes `alias`. The alias may be combined with sub-projections, e.g. `info:person[name,age]` emits `{"info":{...}}`.
 
 Field names in projections and path segments are matched **case-insensitively**.
+
+The recursive descent selector `$..name` visits every node in the document (pre-order / descendant order) and collects all properties matching `name` at any depth. Matching is **case-insensitive** (consistent with the rest of the library), and the result is **always a JSON array** (RFC 9535 nodelist semantics) — even for zero matches (`[]`) or a single match (`[value]`). A trailing projection such as `$..events[number,name]` is applied to each recursively matched node.
 
 If a projection references a field that does not exist in the data (e.g. `$.person[Qname]`, or a field that is omitted because its value is `null`), that field is simply skipped in the output rather than causing an error. This keeps projections robust when working with optional/nullable fields that may be absent from the serialized JSON.
 
@@ -124,6 +129,16 @@ selector.Select("$[home:participants[0].name,away:participants[1].name]");
 
 // Negative index — emits the last participant's name
 selector.Select("$.participants[-1].name");
+
+// Recursive descent — every price at any depth, e.g. [100,20,5,200]
+selector.Select("$..price");
+
+// Recursive descent with projection — projects each matched node
+selector.Select("$..events[number,name]");
+
+// Projection over recursive descent — collects every "books" array at any depth,
+// expands each element with [*] and projects it, e.g. [{"title":"A","price":100},...]
+selector.Select("$..books[*][title,price]");
 ```
 
 ### Working directly with UTF-8 bytes or streams

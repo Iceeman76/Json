@@ -46,10 +46,26 @@ internal static class PathExpressionWriter
                 case StepKind.AllElements:
                     next.AddRange(node.Children);
                     break;
+                case StepKind.RecursiveName:
+                    CollectDescendantsByName(node, step.Name!, next);
+                    break;
             }
         }
 
         return next;
+    }
+
+    private static void CollectDescendantsByName(JsonTree.Node node, string name, List<JsonTree.Node> result)
+    {
+        foreach (var child in node.Children)
+        {
+            if (string.Equals(child.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                result.Add(child);
+            }
+
+            CollectDescendantsByName(child, name, result);
+        }
     }
 
     private static JsonTree.Node? FindChildByName(JsonTree.Node parent, string name)

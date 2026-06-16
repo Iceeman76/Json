@@ -4,7 +4,8 @@ internal enum StepKind
 {
     Name,
     AllChildren,
-    AllElements
+    AllElements,
+    RecursiveName
 }
 
 internal sealed record PathStep(StepKind Kind, string? Name);

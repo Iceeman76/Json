@@ -635,4 +635,105 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo(expected));
     }
+
+    [Test]
+    public void Should_collect_all_prices_with_recursive_descent_in_pre_order()
+    {
+        const string jsonString = """{"store":{"price":100,"book":{"price":20,"details":{"price":5}},"bicycle":{"price":200}}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..price");
+
+        const string expected = "[100,20,5,200]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_match_recursive_name_at_multiple_depths()
+    {
+        const string jsonString = """{"name":"root","child":{"name":"inner","items":[{"name":"a"},{"name":"b"}]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..name");
+
+        const string expected = """["root","inner","a","b"]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_match_recursive_name_case_insensitively()
+    {
+        const string jsonString = """{"store":{"price":100,"book":{"price":20}}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..PRICE");
+
+        const string expected = "[100,20]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_return_single_match_as_array()
+    {
+        const string jsonString = """{"store":{"price":100}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..price");
+
+        const string expected = "[100]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_return_empty_array_when_recursive_name_not_found()
+    {
+        const string jsonString = """{"store":{"book":{"title":"X"}}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..price");
+
+        const string expected = "[]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_apply_projection_to_each_recursively_matched_node()
+    {
+        const string jsonString = """{"draw":{"events":[{"number":1,"name":"A","extra":"skip"},{"number":2,"name":"B","extra":"skip"}]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..events[number,name]");
+
+        const string expected = """[[{"number":1,"name":"A"},{"number":2,"name":"B"}]]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_project_over_recursive_descent_with_chained_wildcard()
+    {
+        const string jsonString = """{"store":{"books":[{"title":"A","price":100,"isbn":"x1"},{"title":"B","price":150,"isbn":"x2"}],"warehouse":{"books":[{"title":"C","price":50,"isbn":"x3"}]}}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..books[*][title,price]");
+
+        const string expected = """[{"title":"A","price":100},{"title":"B","price":150},{"title":"C","price":50}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_throw_format_exception_for_recursive_descent_without_identifier()
+    {
+        const string jsonString = """{"store":{"price":100}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+
+        Assert.That(() => selector.Select("$.."), Throws.TypeOf<FormatException>());
+    }
 }
