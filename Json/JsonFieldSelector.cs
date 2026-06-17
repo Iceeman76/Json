@@ -40,6 +40,8 @@ public sealed record JsonFieldSelector
 
     public void Select(string pathExpression, IBufferWriter<byte> output)
     {
+        pathExpression = TrimWhitespace(pathExpression);
+
         using var writer = new Utf8JsonWriter(output, WriterOptions);
 
         var fastPathNode = TryFastPathLookup(pathExpression);
@@ -55,6 +57,42 @@ public sealed record JsonFieldSelector
         }
 
         writer.Flush();
+    }
+
+    private static string TrimWhitespace(string pathExpression)
+    {
+        if (string.IsNullOrEmpty(pathExpression))
+        {
+            return pathExpression;
+        }
+
+        var hasWhitespace = false;
+
+        foreach (var c in pathExpression)
+        {
+            if (char.IsWhiteSpace(c))
+            {
+                hasWhitespace = true;
+                break;
+            }
+        }
+
+        if (!hasWhitespace)
+        {
+            return pathExpression;
+        }
+
+        var builder = new StringBuilder(pathExpression.Length);
+
+        foreach (var c in pathExpression)
+        {
+            if (!char.IsWhiteSpace(c))
+            {
+                builder.Append(c);
+            }
+        }
+
+        return builder.ToString();
     }
 
     private JsonTree.Node? TryFastPathLookup(string pathExpression)

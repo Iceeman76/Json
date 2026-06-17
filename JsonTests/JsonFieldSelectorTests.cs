@@ -877,4 +877,18 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo("[]"));
     }
+
+    [Test]
+    public void Should_trim_whitespace_from_path_expression()
+    {
+        const string jsonString = """{"store":{"books":[{"title":"A","price":100},{"title":"B","price":150}]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+
+        var expected = selector.Select("$.store.books[title,price]");
+        var withWhitespace = selector.Select("  \t $.store . books [ title , price ] \r\n");
+
+        Assert.That(withWhitespace, Is.EqualTo(expected));
+        Assert.That(withWhitespace, Is.EqualTo("""[{"title":"A","price":100},{"title":"B","price":150}]"""));
+    }
 }
