@@ -49,6 +49,15 @@ internal static class PathExpressionWriter
                 case StepKind.RecursiveName:
                     CollectDescendantsByName(node, step.Name!, next);
                     break;
+                case StepKind.RecursiveAll:
+                    CollectAllDescendants(node, next);
+                    break;
+                case StepKind.RecursiveAllElements:
+                    CollectDescendantArrayElements(node, next);
+                    break;
+                case StepKind.RecursiveElement:
+                    CollectDescendantArrayElementAt(node, step.Name!, next);
+                    break;
             }
         }
 
@@ -65,6 +74,46 @@ internal static class PathExpressionWriter
             }
 
             CollectDescendantsByName(child, name, result);
+        }
+    }
+
+    private static void CollectAllDescendants(JsonTree.Node node, List<JsonTree.Node> result)
+    {
+        foreach (var child in node.Children)
+        {
+            result.Add(child);
+            CollectAllDescendants(child, result);
+        }
+    }
+
+    private static void CollectDescendantArrayElements(JsonTree.Node node, List<JsonTree.Node> result)
+    {
+        if (node.Kind == JsonValueKind.Array)
+        {
+            result.AddRange(node.Children);
+        }
+
+        foreach (var child in node.Children)
+        {
+            CollectDescendantArrayElements(child, result);
+        }
+    }
+
+    private static void CollectDescendantArrayElementAt(JsonTree.Node node, string index, List<JsonTree.Node> result)
+    {
+        if (node.Kind == JsonValueKind.Array)
+        {
+            var element = FindChildByName(node, index);
+
+            if (element is not null)
+            {
+                result.Add(element);
+            }
+        }
+
+        foreach (var child in node.Children)
+        {
+            CollectDescendantArrayElementAt(child, index, result);
         }
     }
 

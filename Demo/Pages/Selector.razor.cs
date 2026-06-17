@@ -132,6 +132,13 @@ public partial class Selector
         new("$..name", "Recursive descent — every name property at any depth (always an array)"),
         new("$..events[number,name]", "Recursive descent with a trailing projection per matched node"),
         new("$..books[*][title,price]", "Projection over recursive descent — flattens every matched array and projects each element"),
+        new("$..*", "Recursive wildcard — every node (property value and array element) at any depth"),
+        new("$.store..*", "Recursive wildcard scoped to a branch"),
+        new("$..[*]", "Every array element at any depth"),
+        new("$..[0]", "The first element of every array at any depth"),
+        new("$..[-1]", "The last element of every array at any depth"),
+        new("$.store..price", "Recursive descent in the middle of a path — only price under store"),
+        new("$..orders..price", "Multiple recursive descents in one expression"),
         new("$.a[*].b[*].c", "Chained wildcards across nested arrays"),
         new("$.person[name,age]", "Object projected to the listed fields only"),
         new("$[name,age]", "Projection from the root object"),
@@ -594,7 +601,25 @@ public partial class Selector
               }
             }
             """,
-            "$..books[*][title,price]")
+            "$..books[*][title,price]"),
+        new("Recursive wildcard & array descent",
+            """
+            {
+              "store": {
+                "price": 100,
+                "tags": ["sale", "new"],
+                "book": {
+                  "price": 20,
+                  "authors": ["Ada", "Bo"]
+                }
+              },
+              "warehouse": {
+                "price": 5,
+                "tags": ["bulk"]
+              }
+            }
+            """,
+            "$..[0]")
     ];
 
     private void OnExampleSelected(ChangeEventArgs e)

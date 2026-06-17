@@ -79,6 +79,13 @@ var result   = selector.Select("$.person.name");
 | `$..name` | Recursive descent — array of every `name` property at any depth (nodelist) |
 | `$..events[number,name]` | Recursive descent with a trailing projection applied to each matched node |
 | `$..books[*][title,price]` | Projection over recursive descent — flattens every matched array and projects each element |
+| `$..*` | Recursive wildcard — every node (property value and array element) at any depth |
+| `$.store..*` | Recursive wildcard scoped to a branch |
+| `$..[*]` | Every array element at any depth |
+| `$..[0]` | The first element of every array at any depth |
+| `$..[-1]` | The last element of every array at any depth |
+| `$.store..price` | Recursive descent in the middle of a path — only `price` under `store` |
+| `$..orders..price` | Multiple recursive descents in one expression |
 | `$.a[*].b[*].c` | Chained wildcards across nested arrays |
 | `$.person[name,age]` | Object projected to the listed fields only |
 | `$[name,age]` | Projection from the root object |
@@ -100,6 +107,14 @@ Any field inside a projection can be aliased with `alias:path` — the source pa
 Field names in projections and path segments are matched **case-insensitively**.
 
 The recursive descent selector `$..name` visits every node in the document (pre-order / descendant order) and collects all properties matching `name` at any depth. Matching is **case-insensitive** (consistent with the rest of the library), and the result is **always a JSON array** (RFC 9535 nodelist semantics) — even for zero matches (`[]`) or a single match (`[value]`). A trailing projection such as `$..events[number,name]` is applied to each recursively matched node.
+
+The recursive descent family extends beyond named properties:
+
+- `$..*` collects **every** node (each property value and array element) at any depth; combine it with a leading path such as `$.store..*` to scope the descent to a branch.
+- `$..[*]` collects **every array element** at any depth, while `$..[0]` / `$..[-1]` pick a specific (optionally negative) index from each array found at any depth.
+- Recursive descent does not have to be the first step — `$.store..price` descends only under `store`, and multiple descents can be chained, e.g. `$..orders..price`.
+
+All recursive-descent results follow the same nodelist semantics — they are always a JSON array.
 
 If a projection references a field that does not exist in the data (e.g. `$.person[Qname]`, or a field that is omitted because its value is `null`), that field is simply skipped in the output rather than causing an error. This keeps projections robust when working with optional/nullable fields that may be absent from the serialized JSON.
 
@@ -139,6 +154,22 @@ selector.Select("$..events[number,name]");
 // Projection over recursive descent — collects every "books" array at any depth,
 // expands each element with [*] and projects it, e.g. [{"title":"A","price":100},...]
 selector.Select("$..books[*][title,price]");
+
+// Recursive wildcard — every node at any depth
+selector.Select("$..*");
+
+// Every array element at any depth, e.g. [1,2,3,4,5]
+selector.Select("$..[*]");
+
+// First / last element of every array at any depth
+selector.Select("$..[0]");
+selector.Select("$..[-1]");
+
+// Recursive descent in the middle of a path — only prices under "store"
+selector.Select("$.store..price");
+
+// Multiple recursive descents in one expression
+selector.Select("$..orders..price");
 ```
 
 ### Working directly with UTF-8 bytes or streams

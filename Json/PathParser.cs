@@ -15,7 +15,11 @@ internal static class PathParser
             var step = ParseStep(cursor);
             steps.Add(step);
 
-            if (step.Kind is StepKind.AllElements or StepKind.RecursiveName)
+            if (step.Kind is StepKind.AllElements
+                or StepKind.RecursiveName
+                or StepKind.RecursiveAll
+                or StepKind.RecursiveAllElements
+                or StepKind.RecursiveElement)
             {
                 hasArrayWildcard = true;
             }
@@ -40,6 +44,24 @@ internal static class PathParser
             if (cursor.HasMore && cursor.Peek() == '.')
             {
                 cursor.Advance();
+
+                if (cursor.HasMore && cursor.Peek() == '*')
+                {
+                    cursor.Advance();
+                    return new PathStep(StepKind.RecursiveAll, null);
+                }
+
+                if (cursor.HasMore && cursor.Peek() == '[')
+                {
+                    if (cursor.LooksLikeWildcardBracket())
+                    {
+                        cursor.Skip("[*]");
+                        return new PathStep(StepKind.RecursiveAllElements, null);
+                    }
+
+                    return new PathStep(StepKind.RecursiveElement, cursor.ReadIndex());
+                }
+
                 return new PathStep(StepKind.RecursiveName, cursor.ReadIdentifier());
             }
 

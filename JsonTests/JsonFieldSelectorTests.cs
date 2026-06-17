@@ -736,4 +736,95 @@ public class JsonFieldSelectorTests
 
         Assert.That(() => selector.Select("$.."), Throws.TypeOf<FormatException>());
     }
+
+    [Test]
+    public void Should_collect_every_descendant_node_with_recursive_wildcard()
+    {
+        const string jsonString = """{"a":[1,2,3],"b":{"c":[4,5],"d":9}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..*");
+
+        const string expected = """[[1,2,3],1,2,3,{"c":[4,5],"d":9},[4,5],4,5,9]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_scope_recursive_wildcard_to_a_branch()
+    {
+        const string jsonString = """{"store":{"price":100,"book":{"price":20}},"other":{"price":999}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.store..*");
+
+        const string expected = """[100,{"price":20},20]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_collect_all_array_elements_with_recursive_element_wildcard()
+    {
+        const string jsonString = """{"a":[1,2,3],"b":{"c":[4,5],"d":9}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..[*]");
+
+        const string expected = "[1,2,3,4,5]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_collect_first_element_of_every_array_at_any_depth()
+    {
+        const string jsonString = """{"a":[1,2,3],"b":{"c":[4,5]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..[0]");
+
+        const string expected = "[1,4]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_collect_last_element_of_every_array_at_any_depth()
+    {
+        const string jsonString = """{"a":[1,2,3],"b":{"c":[4,5]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..[-1]");
+
+        const string expected = "[3,5]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_support_recursive_descent_in_the_middle_of_a_path()
+    {
+        const string jsonString = """{"store":{"price":100,"book":{"price":20}},"other":{"price":999}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$.store..price");
+
+        const string expected = "[100,20]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_support_multiple_recursive_descents_in_one_expression()
+    {
+        const string jsonString = """{"a":{"orders":{"price":1,"nested":{"price":2}}},"b":{"price":999}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..orders..price");
+
+        const string expected = "[1,2]";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
 }
