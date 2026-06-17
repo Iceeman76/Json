@@ -139,6 +139,7 @@ public partial class Selector
         new("$..[-1]", "The last element of every array at any depth"),
         new("$.store..price", "Recursive descent in the middle of a path — only price under store"),
         new("$..orders..price", "Multiple recursive descents in one expression"),
+        new("$..[cost:price]", "Recursive descent with alias — every price at any depth renamed to cost"),
         new("$.a[*].b[*].c", "Chained wildcards across nested arrays"),
         new("$.person[name,age]", "Object projected to the listed fields only"),
         new("$[name,age]", "Projection from the root object"),
@@ -619,7 +620,88 @@ public partial class Selector
               }
             }
             """,
-            "$..[0]")
+            "$..[0]"),
+        new("Recursive descent in a branch",
+            """
+            {
+              "store": {
+                "price": 100,
+                "book": { "price": 20 }
+              },
+              "other": {
+                "price": 999
+              }
+            }
+            """,
+            "$.store..price"),
+        new("All array elements at any depth",
+            """
+            {
+              "a": [1, 2, 3],
+              "b": {
+                "c": [4, 5],
+                "d": 9
+              }
+            }
+            """,
+            "$..[*]"),
+        new("Multiple recursive descents",
+            """
+            {
+              "a": {
+                "orders": {
+                  "price": 1,
+                  "nested": { "price": 2 }
+                }
+              },
+              "b": { "price": 999 }
+            }
+            """,
+            "$..orders..price"),
+        new("Projection per recursive match",
+            """
+            {
+              "order": {
+                "customer": { "name": "Ada", "email": "ada@x.com", "ssn": "s1" },
+                "vendor": {
+                  "name": "Acme",
+                  "contact": { "name": "Bo", "email": "bo@x.com", "ssn": "s2" }
+                }
+              }
+            }
+            """,
+            "$..contact[name,email]"),
+        new("Real-world order summary",
+            """
+            {
+              "order": {
+                "id": 1001,
+                "customer": {
+                  "name": "Ada Lovelace",
+                  "email": "ada@example.com",
+                  "ssn": "secret"
+                },
+                "lines": [
+                  { "sku": "A-1", "qty": 2, "price": 49.9 },
+                  { "sku": "B-7", "qty": 1, "price": 199.0 }
+                ]
+              }
+            }
+            """,
+            "$.order[id,buyer:customer.name,lines[sku,price]]"),
+        new("Recursive descent with alias",
+            """
+            {
+              "store": {
+                "price": 100,
+                "book": { "price": 20 }
+              },
+              "other": {
+                "price": 999
+              }
+            }
+            """,
+            "$..[cost:price]")
     ];
 
     private void OnExampleSelected(ChangeEventArgs e)

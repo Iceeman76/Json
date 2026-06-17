@@ -9,6 +9,7 @@ internal static class PathParser
 
         var steps = new List<PathStep>();
         var hasArrayWildcard = false;
+        string? recursiveAlias = null;
 
         while (cursor.HasMore && !IsTerminalProjection(cursor))
         {
@@ -23,11 +24,16 @@ internal static class PathParser
             {
                 hasArrayWildcard = true;
             }
+
+            if (step.Alias is not null)
+            {
+                recursiveAlias = step.Alias;
+            }
         }
 
         var terminal = cursor.HasMore ? ParseProjection(cursor) : null;
 
-        return new PathQuery(steps, hasArrayWildcard, terminal);
+        return new PathQuery(steps, hasArrayWildcard, terminal, recursiveAlias);
     }
 
     private static bool IsTerminalProjection(Cursor cursor)
@@ -57,6 +63,12 @@ internal static class PathParser
                     {
                         cursor.Skip("[*]");
                         return new PathStep(StepKind.RecursiveAllElements, null);
+                    }
+
+                    if (cursor.LooksLikeAliasBracket())
+                    {
+                        var aliasedName = cursor.ReadAliasBracket(out var bracketAlias);
+                        return new PathStep(StepKind.RecursiveName, aliasedName, bracketAlias);
                     }
 
                     return new PathStep(StepKind.RecursiveElement, cursor.ReadIndex());
@@ -197,6 +209,41 @@ internal static class PathParser
             var next = text[_position + 1];
 
             return char.IsAsciiDigit(next) || next == '-';
+        }
+
+        public bool LooksLikeAliasBracket()
+        {
+            if (_position >= text.Length || text[_position] != '[')
+            {
+                return false;
+            }
+
+            var scan = _position + 1;
+
+            if (scan >= text.Length || !IsIdentifierStart(text[scan]))
+            {
+                return false;
+            }
+
+            scan++;
+
+            while (scan < text.Length && IsIdentifierPart(text[scan]))
+            {
+                scan++;
+            }
+
+            return scan < text.Length && text[scan] == ':';
+        }
+
+        public string ReadAliasBracket(out string alias)
+        {
+            Expect('[');
+            alias = ReadIdentifier();
+            Expect(':');
+            var name = ReadIdentifier();
+            Expect(']');
+
+            return name;
         }
 
         public string ReadIndex()

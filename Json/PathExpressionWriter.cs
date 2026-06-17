@@ -8,13 +8,17 @@ internal static class PathExpressionWriter
     {
         var targets = EvaluateSteps(root, query.Steps);
 
-        if (query.Terminal is null)
+        if (query.Terminal is not null)
         {
-            WriteRawResults(writer, targets, query.HasArrayWildcard);
+            WriteProjectionResults(writer, targets, query.HasArrayWildcard, query.Terminal);
+        }
+        else if (query.RecursiveAlias is not null)
+        {
+            WriteAliasedResults(writer, targets, query.RecursiveAlias);
         }
         else
         {
-            WriteProjectionResults(writer, targets, query.HasArrayWildcard, query.Terminal);
+            WriteRawResults(writer, targets, query.HasArrayWildcard);
         }
     }
 
@@ -149,6 +153,21 @@ internal static class PathExpressionWriter
         foreach (var target in targets)
         {
             writer.WriteSubTree(target);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteAliasedResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, string alias)
+    {
+        writer.WriteStartArray();
+
+        foreach (var target in targets)
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName(alias);
+            writer.WriteSubTree(target);
+            writer.WriteEndObject();
         }
 
         writer.WriteEndArray();

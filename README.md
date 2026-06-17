@@ -86,6 +86,7 @@ var result   = selector.Select("$.person.name");
 | `$..[-1]` | The last element of every array at any depth |
 | `$.store..price` | Recursive descent in the middle of a path — only `price` under `store` |
 | `$..orders..price` | Multiple recursive descents in one expression |
+| `$..[cost:price]` | Recursive descent with alias — every `price` at any depth, renamed to `cost` |
 | `$.a[*].b[*].c` | Chained wildcards across nested arrays |
 | `$.person[name,age]` | Object projected to the listed fields only |
 | `$[name,age]` | Projection from the root object |
@@ -113,6 +114,7 @@ The recursive descent family extends beyond named properties:
 - `$..*` collects **every** node (each property value and array element) at any depth; combine it with a leading path such as `$.store..*` to scope the descent to a branch.
 - `$..[*]` collects **every array element** at any depth, while `$..[0]` / `$..[-1]` pick a specific (optionally negative) index from each array found at any depth.
 - Recursive descent does not have to be the first step — `$.store..price` descends only under `store`, and multiple descents can be chained, e.g. `$..orders..price`.
+- A recursive descent can be aliased with bracket syntax — `$..[cost:price]` collects every `price` at any depth and renames each match, emitting `[{"cost":100},{"cost":20},...]`. The matched value keeps its original shape (objects and arrays are preserved verbatim under the alias).
 
 All recursive-descent results follow the same nodelist semantics — they are always a JSON array.
 
@@ -170,6 +172,10 @@ selector.Select("$.store..price");
 
 // Multiple recursive descents in one expression
 selector.Select("$..orders..price");
+
+// Recursive descent with alias — every price at any depth renamed to "cost",
+// e.g. [{"cost":100},{"cost":20}]
+selector.Select("$..[cost:price]");
 ```
 
 ### Working directly with UTF-8 bytes or streams

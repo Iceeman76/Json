@@ -19,6 +19,14 @@
         max-width: 420px;
     }
 
+        /* Compact option rows so more samples fit in the native dropdown
+           popup before the browser has to add a scrollbar. */
+        .info-banner .form-select option {
+            font-size: 0.85rem;
+            padding: 0.1rem 0.25rem;
+            line-height: 1.1;
+        }
+
 .editor-row {
     display: flex;
     gap: 1rem;

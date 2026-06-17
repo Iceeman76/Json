@@ -827,4 +827,54 @@ public class JsonFieldSelectorTests
 
         Assert.That(result, Is.EqualTo(expected));
     }
+
+    [Test]
+    public void Should_rename_recursively_matched_fields_with_bracket_alias()
+    {
+        const string jsonString = """{"store":{"price":100,"book":{"price":20}},"other":{"price":999}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..[cost:price]");
+
+        const string expected = """[{"cost":100},{"cost":20},{"cost":999}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_match_bracket_alias_case_insensitively()
+    {
+        const string jsonString = """{"a":{"Price":100},"b":{"PRICE":20}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..[cost:price]");
+
+        const string expected = """[{"cost":100},{"cost":20}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_preserve_value_shape_when_renaming_with_bracket_alias()
+    {
+        const string jsonString = """{"a":{"items":[1,2]},"b":{"items":[3]}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..[it:items]");
+
+        const string expected = """[{"it":[1,2]},{"it":[3]}]""";
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Should_return_empty_array_when_bracket_alias_matches_nothing()
+    {
+        const string jsonString = """{"store":{"price":100}}""";
+
+        var selector = new JsonFieldSelector(jsonString);
+        var result = selector.Select("$..[cost:missing]");
+
+        Assert.That(result, Is.EqualTo("[]"));
+    }
 }
