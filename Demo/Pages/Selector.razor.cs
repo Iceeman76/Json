@@ -86,8 +86,82 @@ public partial class Selector
         }
     }
 
+    private string ResultSizeMeta
+    {
+        get
+        {
+            if (ErrorMessage is not null || string.IsNullOrEmpty(Result))
+            {
+                return "";
+            }
+
+            var bytes = Encoding.UTF8.GetByteCount(DisplayedResultText);
+
+            return bytes == 1 ? "1 byte" : $"{bytes.ToString("#,0", CultureInfo.InvariantCulture)} bytes";
+        }
+    }
+
+    // The byte size shown for the result must match what is actually rendered, which is
+    // re-formatted based on the current view and the Format/Minify (ResultMinified) state —
+    // not the raw whitespace that happens to be in the Result string. This keeps the size
+    // stable when the left-hand JSON is reformatted (which re-runs the selector).
+    private string DisplayedResultText
+    {
+        get
+        {
+            var text = OutputText;
+
+            if (string.IsNullOrEmpty(text) || View == ResultView.Tree)
+            {
+                return text;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(text);
+                return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
+                {
+                    WriteIndented = !ResultMinified,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+            }
+            catch
+            {
+                return text;
+            }
+        }
+    }
+
     private void FormatJson() => ReformatJson(indent: true);
     private void MinifyJson() => ReformatJson(indent: false);
+
+    private bool ResultMinified { get; set; }
+
+    private void FormatResult() => ReformatResult(indent: true);
+    private void MinifyResult() => ReformatResult(indent: false);
+
+    private void ReformatResult(bool indent)
+    {
+        if (ErrorMessage is not null || string.IsNullOrWhiteSpace(Result))
+        {
+            return;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(Result);
+            Result = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
+            {
+                WriteIndented = indent,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+            ResultMinified = !indent;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
 
     private void ReformatJson(bool indent)
     {
@@ -110,7 +184,12 @@ public partial class Selector
             ErrorMessage = ex.Message;
         }
 
+        // Reformatting the left-hand JSON re-runs the selector, but it must not change how the
+        // result is presented. Remember the result's Format/Minify state and restore it so the
+        // result (and its byte-size meta) stays stable.
+        var resultMinified = ResultMinified;
         ApplySelector();
+        ResultMinified = resultMinified;
     }
 
     private void ToggleCheatSheet() => ShowCheatSheet = !ShowCheatSheet;
@@ -318,7 +397,8 @@ public partial class Selector
             return;
         }
 
-        sb.AppendLine("{");
+        sb.Append('{');
+        NewLine(sb);
 
         for (var i = 0; i < node.Children.Count; i++)
         {
@@ -328,7 +408,7 @@ public partial class Selector
                 .Append(WebUtility.HtmlEncode(child.JsonPath))
                 .Append("\">")
                 .Append(WebUtility.HtmlEncode(ToJsonStringLiteral(child.Name)))
-                .Append("</span>: ");
+                .Append(ResultMinified ? "</span>:" : "</span>: ");
             RenderNode(child, sb, indent + 1);
 
             if (i < node.Children.Count - 1)
@@ -336,7 +416,7 @@ public partial class Selector
                 sb.Append(',');
             }
 
-            sb.AppendLine();
+            NewLine(sb);
         }
 
         AppendIndent(sb, indent);
@@ -351,7 +431,8 @@ public partial class Selector
             return;
         }
 
-        sb.AppendLine("[");
+        sb.Append('[');
+        NewLine(sb);
 
         for (var i = 0; i < node.Children.Count; i++)
         {
@@ -363,7 +444,7 @@ public partial class Selector
                 sb.Append(',');
             }
 
-            sb.AppendLine();
+            NewLine(sb);
         }
 
         AppendIndent(sb, indent);
@@ -398,7 +479,21 @@ public partial class Selector
         }
     }
 
-    private static void AppendIndent(StringBuilder sb, int indent) => sb.Append(' ', indent * 2);
+    private void NewLine(StringBuilder sb)
+    {
+        if (!ResultMinified)
+        {
+            sb.AppendLine();
+        }
+    }
+
+    private void AppendIndent(StringBuilder sb, int indent)
+    {
+        if (!ResultMinified)
+        {
+            sb.Append(' ', indent * 2);
+        }
+    }
     private static string ToJsonStringLiteral(string value) => JsonSerializer.Serialize(value, StringLiteralOptions);
 
     private static string FormatNumber(object? value) => value switch
@@ -718,8 +813,9 @@ public partial class Selector
         JsonInput = example.Json;
         SelectorInput = example.Selector;
 
-        ReformatJson(indent: true);
+        FormatJson();
         ApplySelector();
+        FormatResult();
     }
 
     private void ClearInputs()
@@ -731,6 +827,7 @@ public partial class Selector
         ElapsedMs = null;
         ResultCount = 0;
         JsonValid = null;
+        ResultMinified = false;
     }
 
     private void ApplySelector()
@@ -739,6 +836,7 @@ public partial class Selector
         Result = "";
         ElapsedMs = null;
         ResultCount = 0;
+        ResultMinified = false;
 
         UpdateJsonValidity();
 

@@ -138,15 +138,25 @@
                     {
                         <span class="result-meta">@ResultMeta</span>
                     }
+                    @if (!string.IsNullOrEmpty(ResultSizeMeta))
+                    {
+                        <span class="result-meta">@ResultSizeMeta</span>
+                    }
                 </span>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button"
-                            class="btn @(View == ResultView.Json ? "btn-primary" : "btn-secondary")"
-                            @onclick="() => SetView(ResultView.Json)">JSON</button>
-                    <button type="button"
-                            class="btn @(View == ResultView.Tree ? "btn-primary" : "btn-secondary")"
-                            @onclick="() => SetView(ResultView.Tree)">Tree</button>
-                </div>
+                <span class="d-flex align-items-center gap-1">
+                    <button class="btn btn-secondary json-tool-btn" type="button" title="Format result"
+                            @onclick="FormatResult">Format</button>
+                    <button class="btn btn-secondary json-tool-btn" type="button" title="Minify result"
+                            @onclick="MinifyResult">Minify</button>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button"
+                                class="btn @(View == ResultView.Json ? "btn-primary" : "btn-secondary")"
+                                @onclick="() => SetView(ResultView.Json)">JSON</button>
+                        <button type="button"
+                                class="btn @(View == ResultView.Tree ? "btn-primary" : "btn-secondary")"
+                                @onclick="() => SetView(ResultView.Tree)">Tree</button>
+                    </div>
+                </span>
             </div>
             <div class="panel-body">
                 <div class="code-wrap">
