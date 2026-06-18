@@ -830,6 +830,35 @@ public partial class Selector
         ResultMinified = false;
     }
 
+    private const int SelectorDebounceMs = 225;
+    private CancellationTokenSource? _selectorDebounceCts;
+
+    private async Task ApplySelectorDebounced()
+    {
+        await _selectorDebounceCts?.CancelAsync()!;
+        _selectorDebounceCts?.Dispose();
+
+        var cts = new CancellationTokenSource();
+        _selectorDebounceCts = cts;
+
+        try
+        {
+            await Task.Delay(SelectorDebounceMs, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (cts.IsCancellationRequested)
+        {
+            return;
+        }
+
+        ApplySelector();
+        StateHasChanged();
+    }
+
     private void ApplySelector()
     {
         ErrorMessage = null;

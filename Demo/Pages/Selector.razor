@@ -44,7 +44,7 @@
         <div class="d-flex gap-2 align-items-center">
             <span class="query-label">Query</span>
             <input id="selector-input" class="form-control font-monospace"
-                   @bind="SelectorInput" @bind:event="oninput" @bind:after="ApplySelector"
+                   @bind="SelectorInput" @bind:event="oninput" @bind:after="ApplySelectorDebounced"
                    autocomplete="off"
                    placeholder="$.items" />
             <button class="btn btn-secondary copy-btn @(QueryCopied ? "copied" : "")"
