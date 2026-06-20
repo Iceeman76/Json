@@ -835,8 +835,11 @@ public partial class Selector
 
     private async Task ApplySelectorDebounced()
     {
-        await _selectorDebounceCts?.CancelAsync()!;
-        _selectorDebounceCts?.Dispose();
+        if (_selectorDebounceCts is not null)
+        {
+            await _selectorDebounceCts.CancelAsync();
+            _selectorDebounceCts.Dispose();
+        }
 
         var cts = new CancellationTokenSource();
         _selectorDebounceCts = cts;
