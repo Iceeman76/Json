@@ -16,6 +16,6 @@ public sealed class GetItemsEndpoint : Endpoint<GetItemsRequest, GetItemsRespons
         var items = ItemCatalog.Generate().Take(limit).ToArray();
         var response = new GetItemsResponse(items.Length, items);
 
-        await SendOkAsync(response, cancellation: ct);
+        await Send.OkAsync(response, ct);
     }
 }
