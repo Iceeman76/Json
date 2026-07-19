@@ -633,12 +633,12 @@ public partial class Selector
         new("Field alias",
             """
             {
-              "name": "Ada",
+              "displayName": "Ada",
               "age": 30
             }
             """,
-            "$[displayName:name,age]",
-            "An alias renames a projected field; here name is emitted as displayName."),
+            "$[name:displayName,age]",
+            "An alias renames a projected field; here displayName is emitted as name."),
         new("Alias on dotted path",
             """
             {
