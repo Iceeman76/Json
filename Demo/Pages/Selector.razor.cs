@@ -625,13 +625,13 @@ public partial class Selector
         new("Alias on dotted path",
             """
             {
-              "events": [
-                { "name": "A", "league": { "name": "Premier" } },
-                { "name": "B", "league": { "name": "Championship" } }
+              "teams": [
+                { "name": "Everton", "league": { "name": "Premier" } },
+                { "name": "Blackburn", "league": { "name": "Championship" } }
               ]
             }
             """,
-            "$.events[name,league:league.name]"),
+            "$.teams[name,league:league.name]"),
         new("Indexed access in projection",
             """
             {
