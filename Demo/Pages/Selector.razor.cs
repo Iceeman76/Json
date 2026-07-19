@@ -26,6 +26,8 @@ public partial class Selector
     private double? ElapsedMs { get; set; }
     private int ResultCount { get; set; }
     private bool ShowCheatSheet { get; set; }
+    private bool ShowDescription { get; set; }
+    private Example? SelectedExample { get; set; }
     private bool _guttersRegistered;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -193,6 +195,8 @@ public partial class Selector
     }
 
     private void ToggleCheatSheet() => ShowCheatSheet = !ShowCheatSheet;
+
+    private void ToggleDescription() => ShowDescription = !ShowDescription;
 
     private void ApplyCheatExpression(string expression)
     {
@@ -505,7 +509,7 @@ public partial class Selector
         _ => WebUtility.HtmlEncode(value?.ToString() ?? "0")
     };
 
-    private record Example(string Name, string Json, string Selector);
+    private record Example(string Name, string Json, string Selector, string Description);
 
     private static readonly Example[] Examples =
     [
@@ -516,7 +520,8 @@ public partial class Selector
               "age": 3
             }
             """,
-            "$"),
+            "$",
+            "The root selector $ selects the entire document."),
         new("Property access",
             """
             {
@@ -524,7 +529,8 @@ public partial class Selector
               "age": 3
             }
             """,
-            "$.name"),
+            "$.name",
+            "Reads a single property from the root object by name."),
         new("Nested property",
             """
             {
@@ -534,21 +540,24 @@ public partial class Selector
               }
             }
             """,
-            "$.user.city"),
+            "$.user.city",
+            "Walks down a dotted path to reach a value nested inside an object."),
         new("Array index",
             """
             {
               "items": [10, 20, 30]
             }
             """,
-            "$.items[0]"),
+            "$.items[0]",
+            "Selects a single array element by its zero-based index."),
         new("Negative index",
             """
             {
               "items": [10, 20, 30]
             }
             """,
-            "$.items[-1]"),
+            "$.items[-1]",
+            "A negative index counts from the end of the array; -1 is the last element."),
         new("Property in array element",
             """
             {
@@ -558,14 +567,16 @@ public partial class Selector
               ]
             }
             """,
-            "$.users[1].name"),
+            "$.users[1].name",
+            "Indexes into an array and then reads a property from that element."),
         new("Nested arrays",
             """
             {
               "matrix": [[1, 2], [3, 4]]
             }
             """,
-            "$.matrix[1][0]"),
+            "$.matrix[1][0]",
+            "Chains indices to reach into arrays nested inside other arrays."),
         new("All properties (wildcard)",
             """
             {
@@ -573,7 +584,8 @@ public partial class Selector
               "age": 30
             }
             """,
-            "$.*"),
+            "$.*",
+            "The wildcard * returns all property values of an object as an array."),
         new("Property from all elements",
             """
             {
@@ -583,7 +595,8 @@ public partial class Selector
               ]
             }
             """,
-            "$.users[*].name"),
+            "$.users[*].name",
+            "Collects the same property from every element of an array."),
         new("Chained wildcards",
             """
             {
@@ -593,7 +606,8 @@ public partial class Selector
               ]
             }
             """,
-            "$.teams[*].players[*].name"),
+            "$.teams[*].players[*].name",
+            "Applies wildcards across nested arrays and flattens the results."),
         new("Field projection",
             """
             {
@@ -604,7 +618,8 @@ public partial class Selector
               }
             }
             """,
-            "$.person[name,age]"),
+            "$.person[name,age]",
+            "A projection keeps only the listed fields and drops the rest."),
         new("Root projection",
             """
             {
@@ -613,7 +628,8 @@ public partial class Selector
               "ssn": "secret"
             }
             """,
-            "$[name,age]"),
+            "$[name,age]",
+            "Projects the listed fields directly from the root object."),
         new("Field alias",
             """
             {
@@ -621,7 +637,8 @@ public partial class Selector
               "age": 30
             }
             """,
-            "$[displayName:name,age]"),
+            "$[displayName:name,age]",
+            "An alias renames a projected field; here name is emitted as displayName."),
         new("Alias on dotted path",
             """
             {
@@ -631,7 +648,8 @@ public partial class Selector
               ]
             }
             """,
-            "$.teams[name,league:league.name]"),
+            "$.teams[name,league:league.name]",
+            "A projected field can descend a dotted path and be given an alias."),
         new("Indexed access in projection",
             """
             {
@@ -641,7 +659,8 @@ public partial class Selector
               ]
             }
             """,
-            "$[home:participants[0].name,away:participants[1].name]"),
+            "$[home:participants[0].name,away:participants[1].name]",
+            "Projection fields can index into arrays and combine that with aliases."),
         new("Projection over array",
             """
             {
@@ -651,7 +670,8 @@ public partial class Selector
               ]
             }
             """,
-            "$.books[*][title,price]"),
+            "$.books[*][title,price]",
+            "Projects each element of an array down to a chosen set of fields."),
         new("Nested sub-projection",
             """
             {
@@ -665,7 +685,8 @@ public partial class Selector
               }
             }
             """,
-            "$.order[id,customer[name,email]]"),
+            "$.order[id,customer[name,email]]",
+            "A projection can nest another projection to shape sub-objects."),
         new("Recursive descent",
             """
             {
@@ -680,7 +701,8 @@ public partial class Selector
               }
             }
             """,
-            "$..price"),
+            "$..price",
+            "Recursive descent (..) finds every price property at any depth; the result is always an array."),
         new("Projection over recursive descent",
             """
             {
@@ -697,7 +719,8 @@ public partial class Selector
               }
             }
             """,
-            "$..books[*][title,price]"),
+            "$..books[*][title,price]",
+            "Finds every matching array at any depth and projects each element."),
         new("Recursive wildcard & array descent",
             """
             {
@@ -715,7 +738,8 @@ public partial class Selector
               }
             }
             """,
-            "$..[0]"),
+            "$..[0]",
+            "Selects the first element of every array found at any depth."),
         new("Recursive descent in a branch",
             """
             {
@@ -728,7 +752,8 @@ public partial class Selector
               }
             }
             """,
-            "$.store..price"),
+            "$.store..price",
+            "Scopes a recursive descent to a branch, so only prices under store match."),
         new("All array elements at any depth",
             """
             {
@@ -739,7 +764,8 @@ public partial class Selector
               }
             }
             """,
-            "$..[*]"),
+            "$..[*]",
+            "Returns every array element found anywhere in the document."),
         new("Multiple recursive descents",
             """
             {
@@ -752,7 +778,8 @@ public partial class Selector
               "b": { "price": 999 }
             }
             """,
-            "$..orders..price"),
+            "$..orders..price",
+            "Two recursive descents chain together: prices found under any orders node."),
         new("Projection per recursive match",
             """
             {
@@ -765,7 +792,8 @@ public partial class Selector
               }
             }
             """,
-            "$..contact[name,email]"),
+            "$..contact[name,email]",
+            "Applies a projection to every node matched by a recursive descent."),
         new("Real-world order summary",
             """
             {
@@ -783,7 +811,8 @@ public partial class Selector
               }
             }
             """,
-            "$.order[id,buyer:customer.name,lines[sku,price]]"),
+            "$.order[id,buyer:customer.name,lines[sku,price]]",
+            "Combines aliases, dotted paths and nested projections to reshape an order."),
         new("Recursive descent with alias",
             """
             {
@@ -796,7 +825,8 @@ public partial class Selector
               }
             }
             """,
-            "$..[cost:price]")
+            "$..[cost:price]",
+            "Renames values gathered by a recursive descent; every price is emitted as cost.")
     ];
 
     private void OnExampleSelected(ChangeEventArgs e)
@@ -810,6 +840,7 @@ public partial class Selector
             return;
         }
 
+        SelectedExample = example;
         JsonInput = example.Json;
         SelectorInput = example.Selector;
 
@@ -828,6 +859,8 @@ public partial class Selector
         ResultCount = 0;
         JsonValid = null;
         ResultMinified = false;
+        SelectedExample = null;
+        ShowDescription = false;
     }
 
     private const int SelectorDebounceMs = 225;

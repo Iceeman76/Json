@@ -11,10 +11,24 @@
             <option value="@example.Name">@example.Name</option>
         }
     </select>
+    <button class="btn btn-secondary description-toggle" type="button"
+            disabled="@(SelectedExample is null)"
+            @onclick="ToggleDescription">
+        @(ShowDescription ? "Hide description" : "Description")
+    </button>
     <button class="btn btn-secondary cheat-toggle" type="button" @onclick="ToggleCheatSheet">
         @(ShowCheatSheet ? "Hide cheat sheet" : "Cheat sheet")
     </button>
 </div>
+
+@if (ShowDescription && SelectedExample is not null)
+{
+    <div class="description-panel">
+        <div class="description-title">@SelectedExample.Name</div>
+        <p class="description-text">@SelectedExample.Description</p>
+        <code class="description-selector">@SelectedExample.Selector</code>
+    </div>
+}
 
 @if (ShowCheatSheet)
 {
