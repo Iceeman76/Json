@@ -14,8 +14,9 @@ public class JsonFieldSelectorTests
         var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$[id:requestId,info:draw[turnover,comment:drawComment,matches:events[number:eventNumber,country:league.country.name,home:participants[0].name,away:participants[1].name]]]");
         var tree = JsonTree.Parse(result);
+        var nodes = tree.Flatten();
 
-        TestContext.Progress.WriteLine(tree.ToJsonString(new JsonWriterOptions { Indented = true }));
+        Assert.That(nodes, Has.Length.EqualTo(70));
     }
 
     [Test]

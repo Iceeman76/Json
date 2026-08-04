@@ -7,8 +7,6 @@ namespace JsonTests;
 
 public class JsonTreeTests
 {
-    private readonly JsonWriterOptions _options = new() { Indented = true };
-
     [Test]
     public void Large_json()
     {
@@ -41,9 +39,6 @@ public class JsonTreeTests
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
-
         using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].JsonPath, Is.EqualTo("$.a"));
@@ -62,9 +57,6 @@ public class JsonTreeTests
 
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
-
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
         using (Assert.EnterMultipleScope())
         {
@@ -86,9 +78,6 @@ public class JsonTreeTests
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
-
         using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].JsonPath, Is.EqualTo("$.numbers"));
@@ -109,9 +98,6 @@ public class JsonTreeTests
 
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
-
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
         using (Assert.EnterMultipleScope())
         {
@@ -135,9 +121,6 @@ public class JsonTreeTests
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
-
         using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].JsonPath, Is.EqualTo("$.mixed"));
@@ -159,9 +142,6 @@ public class JsonTreeTests
 
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
-
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
         using (Assert.EnterMultipleScope())
         {
@@ -246,9 +226,6 @@ public class JsonTreeTests
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
-
         using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].JsonPath, Is.EqualTo("$.matrix"));
@@ -273,9 +250,6 @@ public class JsonTreeTests
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
-
         using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].JsonPath, Is.EqualTo("$.n"));
@@ -297,9 +271,6 @@ public class JsonTreeTests
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
 
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
-
         using (Assert.EnterMultipleScope())
         {
             Assert.That(nodes[0].JsonPath, Is.EqualTo("$.emptyObj"));
@@ -318,9 +289,6 @@ public class JsonTreeTests
 
         var tree = JsonTree.Parse(jsonString);
         var nodes = tree.Flatten();
-
-        TestContext.Progress.WriteLine(tree);
-        TestContext.Progress.WriteLine(tree.ToJsonString(_options));
 
         using (Assert.EnterMultipleScope())
         {
