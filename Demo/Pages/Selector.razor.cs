@@ -211,6 +211,7 @@ public partial class Selector
         new("$", "Entire document"),
         new("$.a.b", "Scalar value or sub-object at path"),
         new("$.items[*].name", "Array of name values from every element"),
+        new("$.items[*].category|distinct", "Distinct category values, preserving first occurrence order"),
         new("$.items.*", "Array of all property values of an object"),
         new("$..name", "Recursive descent — every name property at any depth (always an array)"),
         new("$..events[number,name]", "Recursive descent with a trailing projection per matched node"),
@@ -608,6 +609,34 @@ public partial class Selector
             """,
             "$.teams[*].players[*].name",
             "Applies wildcards across nested arrays and flattens the results."),
+        new("Distinct scalar values",
+            """
+            {
+              "products": [
+                { "name": "Keyboard", "category": "Accessories" },
+                { "name": "Mouse", "category": "Accessories" },
+                { "name": "Monitor", "category": "Displays" },
+                { "name": "Webcam", "category": "Accessories" }
+              ]
+            }
+            """,
+            "$.products[*].category|distinct",
+            "Appends |distinct to keep only the first occurrence of each selected category."),
+        new("Distinct recursive values",
+            """
+            {
+              "primary": {
+                "office": { "country": "Sweden" },
+                "warehouse": { "country": "Norway" }
+              },
+              "secondary": {
+                "office": { "country": "Sweden" },
+                "warehouse": { "country": "Denmark" }
+              }
+            }
+            """,
+            "$..country|distinct",
+            "Combines recursive descent with |distinct to collect unique values from any depth."),
         new("Field projection",
             """
             {
@@ -672,6 +701,19 @@ public partial class Selector
             """,
             "$.books[*][title,price]",
             "Projects each element of an array down to a chosen set of fields."),
+        new("Distinct projected objects",
+            """
+            {
+              "orders": [
+                { "id": 1, "customer": "Ada", "status": "Open" },
+                { "id": 2, "customer": "Bo", "status": "Open" },
+                { "id": 3, "customer": "Cy", "status": "Closed" },
+                { "id": 4, "customer": "Di", "status": "Open" }
+              ]
+            }
+            """,
+            "$.orders[*][status]|distinct",
+            "Distinct is applied after projection, so objects that produce the same projected shape are emitted once."),
         new("Nested sub-projection",
             """
             {

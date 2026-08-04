@@ -106,7 +106,7 @@ public sealed record JsonFieldSelector
         {
             var c = pathExpression[i];
 
-            if (c is '[' or '*' or ',' or ':')
+            if (c is '[' or '*' or ',' or ':' or '|')
             {
                 return true;
             }

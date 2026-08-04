@@ -17,4 +17,4 @@ internal sealed record FieldExpr(IReadOnlyList<string> Path, string? Alias, bool
 
 internal sealed record Projection(IReadOnlyList<FieldExpr> Fields);
 
-internal sealed record PathQuery(IReadOnlyList<PathStep> Steps, bool HasArrayWildcard, Projection? Terminal, string? RecursiveAlias = null);
+internal sealed record PathQuery(IReadOnlyList<PathStep> Steps, bool HasArrayWildcard, Projection? Terminal, string? RecursiveAlias = null, bool Distinct = false);

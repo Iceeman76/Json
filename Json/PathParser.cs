@@ -11,7 +11,7 @@ internal static class PathParser
         var hasArrayWildcard = false;
         string? recursiveAlias = null;
 
-        while (cursor.HasMore && !IsTerminalProjection(cursor))
+        while (cursor.HasMore && cursor.Peek() != '|' && !IsTerminalProjection(cursor))
         {
             var step = ParseStep(cursor);
             steps.Add(step);
@@ -31,9 +31,15 @@ internal static class PathParser
             }
         }
 
-        var terminal = cursor.HasMore ? ParseProjection(cursor) : null;
+        var terminal = cursor.HasMore && cursor.Peek() == '[' ? ParseProjection(cursor) : null;
+        var distinct = cursor.TryRead("|distinct");
 
-        return new PathQuery(steps, hasArrayWildcard, terminal, recursiveAlias);
+        if (cursor.HasMore)
+        {
+            throw new FormatException($"Unexpected character at position {cursor.Position} in '{expression}'.");
+        }
+
+        return new PathQuery(steps, hasArrayWildcard, terminal, recursiveAlias, distinct);
     }
 
     private static bool IsTerminalProjection(Cursor cursor)
@@ -169,6 +175,8 @@ internal static class PathParser
 
         public bool HasMore => _position < text.Length;
 
+        public int Position => _position;
+
         public char Peek() => text[_position];
 
         public void Advance() => _position++;
@@ -189,6 +197,17 @@ internal static class PathParser
             {
                 Expect(c);
             }
+        }
+
+        public bool TryRead(string token)
+        {
+            if (!text.AsSpan(_position).StartsWith(token, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            _position += token.Length;
+            return true;
         }
 
         public bool LooksLikeWildcardBracket()

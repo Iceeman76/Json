@@ -75,6 +75,7 @@ var result   = selector.Select("$.person.name");
 | `$` | Entire document |
 | `$.a.b` | Scalar value or sub-object at path |
 | `$.items[*].name` | Array of `name` values from every element |
+| `$.items[*].category\|distinct` | Distinct category values, preserving first occurrence order |
 | `$.items.*` | Array of all property values of an object |
 | `$..name` | Recursive descent — array of every `name` property at any depth (nodelist) |
 | `$..events[number,name]` | Recursive descent with a trailing projection applied to each matched node |
@@ -117,6 +118,10 @@ The recursive descent family extends beyond named properties:
 - A recursive descent can be aliased with bracket syntax — `$..[cost:price]` collects every `price` at any depth and renames each match, emitting `[{"cost":100},{"cost":20},...]`. The matched value keeps its original shape (objects and arrays are preserved verbatim under the alias).
 
 All recursive-descent results follow the same nodelist semantics — they are always a JSON array.
+
+Append `|distinct` to remove duplicate values from a selector result. Distinct is applied after any projection, preserves the order of the first occurrence and works with scalar values as well as arrays and objects. Numbers are compared by numeric value, arrays are order-sensitive, and objects are compared structurally regardless of property order. JSON types remain distinct, so `1`, `"1"` and `true` are different values.
+
+The selector filters duplicates while processing the matched nodes and retains only the set of values already seen; it does not serialize a second complete result before deduplication.
 
 If a projection references a field that does not exist in the data (e.g. `$.person[Qname]`, or a field that is omitted because its value is `null`), that field is simply skipped in the output rather than causing an error. This keeps projections robust when working with optional/nullable fields that may be absent from the serialized JSON.
 
@@ -176,6 +181,15 @@ selector.Select("$..orders..price");
 // Recursive descent with alias — every price at any depth renamed to "cost",
 // e.g. [{"cost":100},{"cost":20}]
 selector.Select("$..[cost:price]");
+
+// Distinct scalar values — preserves the first occurrence order
+selector.Select("$.products[*].category|distinct");
+
+// Distinct values gathered recursively from any depth
+selector.Select("$..country|distinct");
+
+// Distinct is applied after projection
+selector.Select("$.orders[*][status]|distinct");
 ```
 
 ### Working directly with UTF-8 bytes or streams
@@ -241,6 +255,7 @@ Features:
 
 - **Live evaluation** — paste JSON, type a query, and the result updates automatically as either field changes (no "Run" button).
 - **Built-in examples** — a dropdown of progressively complex examples that demonstrate every `JsonFieldSelector` feature listed in the syntax table above, filling in both the JSON and the query.
+- **Distinct examples** — explore unique scalar values, recursive matches and projected objects using `|distinct`.
 - **Result views** — toggle the output between syntax-highlighted JSON and the `JsonTree` text representation.
 - **JsonTree-powered highlighting** — the output is colorized by walking the parsed `JsonTree`/`Node` model rather than regex tokenizing.
 - **Hover & click paths** — hover a key/value in the output to see its JSONPath, or click it to set that path as the query.
