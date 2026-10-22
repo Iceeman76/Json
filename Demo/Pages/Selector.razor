@@ -137,7 +137,7 @@
                 <div class="code-wrap">
                     <div id="json-gutter" class="line-gutter">@InputGutter</div>
                     <textarea id="json-input" class="form-control font-monospace"
-                              @bind="JsonInput" @bind:event="oninput" @bind:after="ApplySelector"
+                              @bind="JsonInput" @bind:event="oninput" @bind:after="ApplySelectorDebounced"
                               placeholder='{ "name": "Junie", "items": [1, 2, 3] }'></textarea>
                 </div>
             </div>

@@ -10,7 +10,7 @@ using Microsoft.JSInterop;
 
 namespace Demo.Pages;
 
-public partial class Selector
+public sealed partial class Selector : IDisposable
 {
     [Inject]
     private IJSRuntime Js { get; set; } = null!;
@@ -29,6 +29,15 @@ public partial class Selector
     private bool ShowDescription { get; set; }
     private Example? SelectedExample { get; set; }
     private bool _guttersRegistered;
+    private string? _parsedInput;
+    private string? _inputError;
+    private JsonTree? _inputTree;
+    private JsonFieldSelector? _fieldSelector;
+    private JsonTree? _resultTree;
+    private (string Result, string? Error, ResultView View, bool Minified)? _renderedOutputKey;
+    private string _displayedOutput = "";
+    private string _highlightedOutput = "";
+    private string _outputGutter = "";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -41,7 +50,15 @@ public partial class Selector
     }
 
     private MarkupString InputGutter => BuildGutter(CountLines(JsonInput));
-    private MarkupString OutputGutter => BuildGutter(CountLines(HighlightJson(OutputText)));
+    private MarkupString OutputGutter
+    {
+        get
+        {
+            EnsureOutput();
+
+            return (MarkupString)_outputGutter;
+        }
+    }
 
     private static int CountLines(string text) => string.IsNullOrEmpty(text) ? 1 : text.Split('\n').Length;
 
@@ -103,34 +120,13 @@ public partial class Selector
         }
     }
 
-    // The byte size shown for the result must match what is actually rendered, which is
-    // re-formatted based on the current view and the Format/Minify (ResultMinified) state —
-    // not the raw whitespace that happens to be in the Result string. This keeps the size
-    // stable when the left-hand JSON is reformatted (which re-runs the selector).
     private string DisplayedResultText
     {
         get
         {
-            var text = OutputText;
+            EnsureOutput();
 
-            if (string.IsNullOrEmpty(text) || View == ResultView.Tree)
-            {
-                return text;
-            }
-
-            try
-            {
-                using var doc = JsonDocument.Parse(text);
-                return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
-                {
-                    WriteIndented = !ResultMinified,
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                });
-            }
-            catch
-            {
-                return text;
-            }
+            return _displayedOutput;
         }
     }
 
@@ -149,20 +145,7 @@ public partial class Selector
             return;
         }
 
-        try
-        {
-            using var doc = JsonDocument.Parse(Result);
-            Result = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
-            {
-                WriteIndented = indent,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-            ResultMinified = !indent;
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
+        ResultMinified = indent is false;
     }
 
     private void ReformatJson(bool indent)
@@ -172,23 +155,17 @@ public partial class Selector
             return;
         }
 
-        try
+        EnsureInput();
+
+        if (_inputTree is null)
         {
-            using var doc = JsonDocument.Parse(JsonInput);
-            JsonInput = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
-            {
-                WriteIndented = indent,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
+            ErrorMessage = _inputError;
+
+            return;
         }
 
-        // Reformatting the left-hand JSON re-runs the selector, but it must not change how the
-        // result is presented. Remember the result's Format/Minify state and restore it so the
-        // result (and its byte-size meta) stays stable.
+        JsonInput = _inputTree.ToJsonString(new JsonWriterOptions { Indented = indent });
+        _parsedInput = JsonInput;
         var resultMinified = ResultMinified;
         ApplySelector();
         ResultMinified = resultMinified;
@@ -204,7 +181,7 @@ public partial class Selector
         ApplySelector();
     }
 
-    private record CheatRow(string Expression, string Description);
+    private sealed record CheatRow(string Expression, string Description);
 
     private static readonly CheatRow[] CheatSheet =
     [
@@ -312,71 +289,53 @@ public partial class Selector
 
     private ResultView View { get; set; } = ResultView.Json;
 
-    private string OutputText
+    private void EnsureOutput()
     {
-        get
+        var key = (Result, ErrorMessage, View, ResultMinified);
+
+        if (_renderedOutputKey == key)
         {
-            if (ErrorMessage is not null)
-            {
-                return ErrorMessage;
-            }
-
-            if (string.IsNullOrEmpty(Result) || View == ResultView.Json)
-            {
-                return Result;
-            }
-
-            try
-            {
-                return JsonTree.Parse(Result).ToString();
-            }
-            catch
-            {
-                return Result;
-            }
+            return;
         }
+
+        _renderedOutputKey = key;
+        _displayedOutput = ErrorMessage ?? "";
+
+        if (ErrorMessage is null && _resultTree is not null)
+        {
+            _displayedOutput = View == ResultView.Tree ? _resultTree.ToString() : _resultTree.ToJsonString(new JsonWriterOptions { Indented = ResultMinified is false });
+        }
+
+        if (ErrorMessage is null && View == ResultView.Json && _resultTree is not null)
+        {
+            var builder = new StringBuilder(_displayedOutput.Length + 64);
+            RenderNode(_resultTree.FindNode("$")!, builder, 0);
+            _highlightedOutput = builder.ToString();
+        }
+        else
+        {
+            _highlightedOutput = WebUtility.HtmlEncode(_displayedOutput);
+        }
+
+        _outputGutter = BuildGutter(CountLines(_displayedOutput)).Value;
     }
 
     private void SetView(ResultView view) => View = view;
 
-    private MarkupString HighlightedOutput => (MarkupString)HighlightJson(OutputText);
+    private MarkupString HighlightedOutput
+    {
+        get
+        {
+            EnsureOutput();
+
+            return (MarkupString)_highlightedOutput;
+        }
+    }
 
     private static readonly JsonSerializerOptions StringLiteralOptions = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
-
-    private string HighlightJson(string text)
-    {
-        if (string.IsNullOrEmpty(text))
-        {
-            return "";
-        }
-
-        if (ErrorMessage is not null || View == ResultView.Tree)
-        {
-            return WebUtility.HtmlEncode(text);
-        }
-
-        try
-        {
-            var root = JsonTree.Parse(text).FindNode("$");
-
-            if (root is null)
-            {
-                return WebUtility.HtmlEncode(text);
-            }
-
-            var sb = new StringBuilder(text.Length + 64);
-            RenderNode(root, sb, 0);
-
-            return sb.ToString();
-        }
-        catch
-        {
-            return WebUtility.HtmlEncode(text);
-        }
-    }
 
     private void RenderNode(JsonTree.Node node, StringBuilder sb, int indent)
     {
@@ -510,7 +469,7 @@ public partial class Selector
         _ => WebUtility.HtmlEncode(value?.ToString() ?? "0")
     };
 
-    private record Example(string Name, string Json, string Selector, string Description);
+    private sealed record Example(string Name, string Json, string Selector, string Description);
 
     private static readonly Example[] Examples =
     [
@@ -887,7 +846,6 @@ public partial class Selector
         SelectorInput = example.Selector;
 
         FormatJson();
-        ApplySelector();
         FormatResult();
     }
 
@@ -899,6 +857,10 @@ public partial class Selector
         ErrorMessage = null;
         ElapsedMs = null;
         ResultCount = 0;
+        _inputTree = null;
+        _fieldSelector = null;
+        _resultTree = null;
+        _parsedInput = null;
         JsonValid = null;
         ResultMinified = false;
         SelectedExample = null;
@@ -939,13 +901,23 @@ public partial class Selector
 
     private void ApplySelector()
     {
+        _selectorDebounceCts?.Cancel();
         ErrorMessage = null;
         Result = "";
+        _resultTree = null;
+        _renderedOutputKey = null;
         ElapsedMs = null;
         ResultCount = 0;
         ResultMinified = false;
 
-        UpdateJsonValidity();
+        EnsureInput();
+
+        if (JsonValid is false)
+        {
+            ErrorMessage = _inputError;
+
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(JsonInput) || string.IsNullOrWhiteSpace(SelectorInput))
         {
@@ -955,12 +927,13 @@ public partial class Selector
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            var fieldSelector = new JsonFieldSelector(JsonInput);
-            Result = fieldSelector.Select(SelectorInput);
+            Result = _fieldSelector!.Select(SelectorInput);
             stopwatch.Stop();
 
             ElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
-            ResultCount = CountMatches(Result);
+            _resultTree = JsonTree.Parse(Result);
+            var root = _resultTree.FindNode("$")!;
+            ResultCount = root.Kind == JsonValueKind.Array ? root.Children.Count : 1;
         }
         catch (Exception ex)
         {
@@ -968,8 +941,18 @@ public partial class Selector
         }
     }
 
-    private void UpdateJsonValidity()
+    private void EnsureInput()
     {
+        if (string.Equals(_parsedInput, JsonInput, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _parsedInput = JsonInput;
+        _inputTree = null;
+        _fieldSelector = null;
+        _inputError = null;
+
         if (string.IsNullOrWhiteSpace(JsonInput))
         {
             JsonValid = null;
@@ -978,36 +961,24 @@ public partial class Selector
 
         try
         {
-            JsonTree.Parse(JsonInput);
+            _inputTree = JsonTree.Parse(JsonInput);
+            _fieldSelector = new JsonFieldSelector(_inputTree);
             JsonValid = true;
         }
-        catch
+        catch (JsonException exception)
         {
             JsonValid = false;
+            _inputError = exception.Message;
         }
     }
 
-    private static int CountMatches(string json)
+    public void Dispose()
     {
-        if (string.IsNullOrEmpty(json))
-        {
-            return 0;
-        }
-
-        try
-        {
-            var root = JsonTree.Parse(json).FindNode("$");
-
-            if (root is null)
-            {
-                return 0;
-            }
-
-            return root.Kind == JsonValueKind.Array ? root.Children.Count : 1;
-        }
-        catch
-        {
-            return 0;
-        }
+        _selectorDebounceCts?.Cancel();
+        _selectorDebounceCts?.Dispose();
+        _copyResetCts?.Cancel();
+        _copyResetCts?.Dispose();
+        _pasteResetCts?.Cancel();
+        _pasteResetCts?.Dispose();
     }
 }
