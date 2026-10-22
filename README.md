@@ -2,6 +2,8 @@
 
 A .NET library for parsing JSON into a navigable tree and extracting fields via a JSONPath-like query syntax.
 
+[Try the interactive playground at dotnetlab.se](https://www.dotnetlab.se).
+
 ## JsonTree
 
 Parses a JSON string into an in-memory tree where each node has a full JSONPath (e.g. `$.person.name`, `$['first name']`).
@@ -242,6 +244,8 @@ Without the header the full payload is returned. The projection is applied by `S
 ## Demo
 
 `Demo` is a standalone Blazor WebAssembly client that provides an interactive playground for the selector. It runs entirely in the browser and shares the selector logic by referencing the `Json` library directly.
+
+Use the hosted playground at [www.dotnetlab.se](https://www.dotnetlab.se).
 
 <a href="docs/demo-preview.png"><img src="docs/demo-preview.png" alt="Preview of the Demo client" width="800"></a>
 
