@@ -149,7 +149,7 @@ public sealed partial class JsonTree
 
         private void BuildRecursiveString(StringBuilder sb, int depth = 0)
         {
-            if (_parent is null)
+            if (_parent is null && HasChildren)
             {
                 depth--;
             }

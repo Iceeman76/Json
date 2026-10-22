@@ -47,6 +47,72 @@ public class SelectorMiddlewareTests
         Assert.That(async () => await Invoke(context, WriteJson(Json)), Throws.TypeOf<FormatException>());
     }
 
+    [TestCase(400)]
+    [TestCase(404)]
+    [TestCase(500)]
+    public async Task Preserves_error_responses_instead_of_projecting_them(int statusCode)
+    {
+        const string error = """{"errors":{"limit":["Limit is too large."]}}""";
+        var context = CreateContext("$.person[name]");
+        context.Response.StatusCode = statusCode;
+
+        await Invoke(context, WriteJson(error));
+
+        Assert.That(ReadBody(context), Is.EqualTo(error));
+        Assert.That(context.Response.StatusCode, Is.EqualTo(statusCode));
+    }
+
+    [TestCase(200)]
+    [TestCase(204)]
+    public async Task Passes_empty_responses_through_without_parsing_json(int statusCode)
+    {
+        var context = CreateContext("$.person[name]");
+        context.Response.StatusCode = statusCode;
+
+        await Invoke(context, WriteJson(""));
+
+        Assert.That(ReadBody(context), Is.Empty);
+    }
+
+    [Test]
+    public async Task Does_not_apply_selectors_to_head_responses()
+    {
+        var context = CreateContext("$.person[name]");
+        context.Request.Method = "HEAD";
+
+        await Invoke(context, WriteJson(Json));
+
+        Assert.That(ReadBody(context), Is.EqualTo(Json));
+    }
+
+    [Test]
+    public async Task Leaves_jsonp_responses_unchanged()
+    {
+        var context = CreateContext("$.person[name]");
+
+        await Invoke(context, async responseContext =>
+        {
+            responseContext.Response.ContentType = "application/jsonp";
+            await responseContext.Response.WriteAsync("callback({});");
+        });
+
+        Assert.That(ReadBody(context), Is.EqualTo("callback({});"));
+    }
+
+    [Test]
+    public async Task Projects_json_responses_with_vendor_media_types()
+    {
+        var context = CreateContext("$.person[name]");
+
+        await Invoke(context, async responseContext =>
+        {
+            responseContext.Response.ContentType = "application/vnd.example+json; charset=utf-8";
+            await responseContext.Response.WriteAsync(Json);
+        });
+
+        Assert.That(ReadBody(context), Is.EqualTo("""{"name":"Alice"}"""));
+    }
+
     private static Task Invoke(HttpContext context, RequestDelegate next)
     {
         var middleware = new SelectorMiddleware(next, NullLogger<SelectorMiddleware>.Instance);

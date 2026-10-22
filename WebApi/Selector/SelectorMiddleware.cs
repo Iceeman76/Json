@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Net.Http.Headers;
 using Json;
 
 namespace WebApi.Selector;
@@ -33,11 +34,11 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
             context.Response.Body = originalBody;
         }
 
-        if (IsJsonResponse(context) == false)
+        if (buffer.Length == 0 || HttpMethods.IsHead(context.Request.Method) || context.Response.StatusCode is < 200 or >= 300 || IsJsonResponse(context) is false)
         {
-            logger.LogDebug("Response content type {ContentType} is not JSON, selector skipped", context.Response.ContentType);
+            logger.LogDebug("Selector skipped for response with status {StatusCode} and content type {ContentType}", context.Response.StatusCode, context.Response.ContentType);
             buffer.Position = 0;
-            await buffer.CopyToAsync(originalBody);
+            await buffer.CopyToAsync(originalBody, context.RequestAborted);
             return;
         }
 
@@ -47,14 +48,21 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
         new JsonFieldSelector(source).Select(selector, projection);
 
         context.Response.ContentLength = projection.WrittenCount;
-        await originalBody.WriteAsync(projection.WrittenMemory);
+        await originalBody.WriteAsync(projection.WrittenMemory, context.RequestAborted);
 
         logger.LogInformation("Selector applied, response reduced from {OriginalBytes} to {ProjectedBytes} bytes", buffer.Length, projection.WrittenCount);
     }
 
     private static bool IsJsonResponse(HttpContext context)
     {
-        var contentType = context.Response.ContentType;
-        return contentType is not null && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase);
+        if (MediaTypeHeaderValue.TryParse(context.Response.ContentType, out var contentType) is false)
+        {
+            return false;
+        }
+
+        var mediaType = contentType.MediaType!;
+
+        return string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase)
+            || mediaType.StartsWith("application/", StringComparison.OrdinalIgnoreCase) && mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase);
     }
 }

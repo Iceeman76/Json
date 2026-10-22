@@ -73,6 +73,7 @@ internal static class PathParser
         var builder = new StringBuilder(pathExpression.Length);
         var quote = '\0';
         var escaped = false;
+        var separatesToken = false;
 
         foreach (var c in pathExpression)
         {
@@ -96,16 +97,29 @@ internal static class PathParser
             else if (c is '\'' or '"')
             {
                 quote = c;
+                separatesToken = false;
                 builder.Append(c);
             }
             else if (char.IsWhiteSpace(c) is false)
             {
+                if (separatesToken && IsTokenCharacter(c))
+                {
+                    builder.Append(' ');
+                }
+
+                separatesToken = false;
                 builder.Append(c);
+            }
+            else
+            {
+                separatesToken = builder.Length > 0 && IsTokenCharacter(builder[^1]);
             }
         }
 
         return builder.ToString();
     }
+
+    private static bool IsTokenCharacter(char character) => char.IsLetterOrDigit(character) || character is '_' or '$' or '-';
 
     private static bool IsTerminalProjection(Cursor cursor)
     {

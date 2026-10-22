@@ -23,7 +23,7 @@ public static class JsonElementExtensions
             return integer;
         }
 
-        var exactNumber = new JsonNumber(element.GetRawText());
+        var exactNumber = new JsonNumber(element);
         var normalizedNumber = JsonNumber.Normalize(exactNumber);
 
         if (element.TryGetDecimal(out var decimalNumber) && JsonNumber.Normalize(decimalNumber) == normalizedNumber)

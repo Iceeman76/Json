@@ -1,10 +1,30 @@
 using System.Globalization;
 using System.Numerics;
+using System.Text.Json;
 
 namespace Json;
 
-public sealed record JsonNumber(string Text)
+public sealed record JsonNumber
 {
+    public string Text { get; }
+
+    public JsonNumber(string text)
+    {
+        using var document = JsonDocument.Parse(text);
+
+        if (document.RootElement.ValueKind is not JsonValueKind.Number)
+        {
+            throw new ArgumentException("The value must be a JSON number.", nameof(text));
+        }
+
+        Text = document.RootElement.GetRawText();
+    }
+
+    internal JsonNumber(JsonElement element)
+    {
+        Text = element.GetRawText();
+    }
+
     internal static (string Digits, BigInteger Exponent) Normalize(object value)
     {
         var text = value switch

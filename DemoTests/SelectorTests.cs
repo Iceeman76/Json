@@ -92,6 +92,30 @@ public sealed class SelectorTests
     }
 
     [Test]
+    public async Task Formatted_result_byte_count_matches_the_rendered_text()
+    {
+        var component = _context.Render<Selector>();
+        await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = "{\"name\":\"Åsa\",\"items\":[1,2]}" });
+        var renderedText = component.Find("#result-output").TextContent;
+        var expectedBytes = Encoding.UTF8.GetByteCount(renderedText).ToString("#,0", CultureInfo.InvariantCulture);
+
+        Assert.That(component.FindAll(".panel-header")[1].TextContent, Does.Contain($"{expectedBytes} bytes"));
+    }
+
+    [TestCase("42")]
+    [TestCase("null")]
+    [TestCase("{}")]
+    [TestCase("[]")]
+    public async Task Tree_view_shows_scalar_and_empty_roots(string json)
+    {
+        var component = _context.Render<Selector>();
+        await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = json });
+        component.FindAll(".btn-group button")[1].Click();
+
+        Assert.That(component.Find("#result-output").TextContent, Does.StartWith($"$ = {json}"));
+    }
+
+    [Test]
     public async Task Selecting_a_sample_cancels_pending_input_evaluation()
     {
         var component = _context.Render<Selector>();

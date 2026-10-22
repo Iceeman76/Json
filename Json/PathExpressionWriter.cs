@@ -8,24 +8,32 @@ internal static class PathExpressionWriter
     {
         var targets = EvaluateSteps(root, query.Steps);
 
-        if (query.Distinct)
+        if (query.Terminal is not null && query.Distinct is false)
         {
-            ApplyDistinct(targets, query.Terminal is null
-                ? JsonNodeValueComparer.Instance
-                : new ProjectedNodeComparer(query.Terminal));
+            WriteProjectionResults(writer, targets, query.HasArrayWildcard, query.Terminal);
+
+            return;
         }
+
+        IEnumerable<JsonTree.Node> results = targets;
 
         if (query.Terminal is not null)
         {
-            WriteProjectionResults(writer, targets, query.HasArrayWildcard, query.Terminal, query.Distinct);
+            results = targets.Select(target => ProjectTarget(target, query.Terminal, query.Distinct));
         }
-        else if (query.RecursiveAlias is not null)
+
+        if (query.Distinct)
         {
-            WriteAliasedResults(writer, targets, query.RecursiveAlias);
+            results = results.Distinct(JsonNodeValueComparer.Instance);
+        }
+
+        if (query.Terminal is null && query.RecursiveAlias is not null)
+        {
+            WriteAliasedResults(writer, results, query.RecursiveAlias);
         }
         else
         {
-            WriteRawResults(writer, targets, query.HasArrayWildcard);
+            WriteRawResults(writer, results, query.HasArrayWildcard || targets.Count is not 1);
         }
     }
 
@@ -34,27 +42,6 @@ internal static class PathExpressionWriter
         var current = new List<JsonTree.Node> { root };
 
         return steps.Aggregate(current, ApplyStep);
-    }
-
-    private static void ApplyDistinct(List<JsonTree.Node> targets, IEqualityComparer<JsonTree.Node> comparer)
-    {
-        var seen = new HashSet<JsonTree.Node>(comparer);
-        var writeIndex = 0;
-
-        for (var readIndex = 0; readIndex < targets.Count; readIndex++)
-        {
-            var target = targets[readIndex];
-
-            if (seen.Add(target))
-            {
-                targets[writeIndex++] = target;
-            }
-        }
-
-        if (writeIndex < targets.Count)
-        {
-            targets.RemoveRange(writeIndex, targets.Count - writeIndex);
-        }
     }
 
     private static List<JsonTree.Node> ApplyStep(List<JsonTree.Node> nodes, PathStep step)
@@ -156,11 +143,12 @@ internal static class PathExpressionWriter
         }
     }
 
-    private static void WriteRawResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, bool forceWrap)
+    private static void WriteRawResults(Utf8JsonWriter writer, IEnumerable<JsonTree.Node> targets, bool forceWrap)
     {
-        if (!forceWrap && targets.Count == 1)
+        if (forceWrap is false)
         {
-            writer.WriteSubTree(targets[0]);
+            writer.WriteSubTree(targets.Single());
+
             return;
         }
 
@@ -174,7 +162,7 @@ internal static class PathExpressionWriter
         writer.WriteEndArray();
     }
 
-    private static void WriteAliasedResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, string alias)
+    private static void WriteAliasedResults(Utf8JsonWriter writer, IEnumerable<JsonTree.Node> targets, string alias)
     {
         writer.WriteStartArray();
 
@@ -189,11 +177,35 @@ internal static class PathExpressionWriter
         writer.WriteEndArray();
     }
 
-    private static void WriteProjectionResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, bool forceWrap, Projection projection, bool distinct)
+    private static JsonTree.Node ProjectTarget(JsonTree.Node target, Projection projection, bool distinct)
     {
-        if (forceWrap == false && targets.Count == 1)
+        if (target.Kind is not JsonValueKind.Array)
         {
-            WriteProjectedTarget(writer, targets[0], projection, distinct);
+            return ProjectObject(target, projection);
+        }
+
+        var result = new JsonTree.Node("$") { Kind = JsonValueKind.Array };
+        var elements = target.Children.Select(element => ProjectObject(element, projection));
+
+        if (distinct)
+        {
+            elements = elements.Distinct(JsonNodeValueComparer.Instance);
+        }
+
+        foreach (var element in elements)
+        {
+            CopyValue(element, result.AddNode(result.Children.Count.ToString(), isArrayIndex: true));
+        }
+
+        return result;
+    }
+
+    private static void WriteProjectionResults(Utf8JsonWriter writer, IReadOnlyList<JsonTree.Node> targets, bool forceWrap, Projection projection)
+    {
+        if (forceWrap is false && targets.Count == 1)
+        {
+            WriteProjectedTarget(writer, targets[0], projection);
+
             return;
         }
 
@@ -201,216 +213,169 @@ internal static class PathExpressionWriter
 
         foreach (var target in targets)
         {
-            WriteProjectedTarget(writer, target, projection, distinct);
+            WriteProjectedTarget(writer, target, projection);
         }
 
         writer.WriteEndArray();
     }
 
-    private static void WriteProjectedTarget(Utf8JsonWriter writer, JsonTree.Node target, Projection projection, bool distinct)
+    private static void WriteProjectedTarget(Utf8JsonWriter writer, JsonTree.Node target, Projection projection)
     {
         if (target.Kind == JsonValueKind.Array)
         {
             writer.WriteStartArray();
-            var elements = distinct ? target.Children.Distinct(new ProjectedNodeComparer(projection)) : target.Children;
 
-            foreach (var element in elements)
+            foreach (var element in target.Children)
             {
                 WriteProjectedObject(writer, element, projection);
             }
 
             writer.WriteEndArray();
+
             return;
         }
 
         WriteProjectedObject(writer, target, projection);
     }
 
-    private static void WriteProjectedObject(Utf8JsonWriter writer, JsonTree.Node parent, Projection projection)
+    private static void WriteProjectedObject(Utf8JsonWriter writer, JsonTree.Node source, Projection projection)
     {
         writer.WriteStartObject();
 
         foreach (var field in projection.Fields)
         {
-            WriteField(writer, parent, field);
+            var target = Resolve(source, field.Path);
+
+            if (target is null)
+            {
+                continue;
+            }
+
+            writer.WritePropertyName(GetFieldName(field, target));
+
+            if (field.Sub is null && field.ExplicitArray is false)
+            {
+                writer.WriteSubTree(target);
+            }
+            else if (field.ExplicitArray || target.Kind == JsonValueKind.Array)
+            {
+                writer.WriteStartArray();
+
+                if (target.Kind == JsonValueKind.Array)
+                {
+                    foreach (var element in target.Children)
+                    {
+                        if (field.Sub is null)
+                        {
+                            writer.WriteSubTree(element);
+                        }
+                        else
+                        {
+                            WriteProjectedObject(writer, element, field.Sub);
+                        }
+                    }
+                }
+
+                writer.WriteEndArray();
+            }
+            else
+            {
+                WriteProjectedObject(writer, target, field.Sub!);
+            }
         }
 
         writer.WriteEndObject();
     }
 
-    private static void WriteField(Utf8JsonWriter writer, JsonTree.Node parent, FieldExpr field)
+    private static JsonTree.Node ProjectObject(JsonTree.Node source, Projection projection)
     {
-        var target = parent;
+        var result = new JsonTree.Node("$") { Kind = JsonValueKind.Object };
+        ProjectFields(source, projection, result);
 
-        foreach (var segment in field.Path)
-        {
-            var child = target.FindChild(segment);
-
-            if (child is null)
-            {
-                return;
-            }
-
-            target = child;
-        }
-
-        if (field.Sub is null)
-        {
-            writer.WritePropertyName(GetFieldName(field, target));
-            writer.WriteSubTree(target);
-
-            return;
-        }
-
-        var asArray = field.ExplicitArray || target.Kind == JsonValueKind.Array;
-
-        writer.WritePropertyName(GetFieldName(field, target));
-
-        if (asArray)
-        {
-            writer.WriteStartArray();
-
-            foreach (var element in target.Children)
-            {
-                WriteProjectedObject(writer, element, field.Sub);
-            }
-
-            writer.WriteEndArray();
-
-            return;
-        }
-
-        WriteProjectedObject(writer, target, field.Sub);
+        return result;
     }
 
-    private static string GetFieldName(FieldExpr field, JsonTree.Node target) => field.Alias ?? (target.InArray ? field.Path.Last(step => step.Kind == StepKind.Name).Name! : target.Name);
-
-    private sealed class ProjectedNodeComparer(Projection projection) : IEqualityComparer<JsonTree.Node>
+    private static void ProjectFields(JsonTree.Node source, Projection projection, JsonTree.Node destination)
     {
-        public bool Equals(JsonTree.Node? firstNode, JsonTree.Node? secondNode) => ProjectedTargetEquals(firstNode!, secondNode!, projection);
+        destination.Kind = JsonValueKind.Object;
 
-        public int GetHashCode(JsonTree.Node node) => ProjectedTargetHash(node, projection);
-
-        private static bool ProjectedTargetEquals(JsonTree.Node firstNode, JsonTree.Node secondNode, Projection current)
+        foreach (var field in projection.Fields)
         {
-            if (firstNode.Kind == JsonValueKind.Array || secondNode.Kind == JsonValueKind.Array)
+            var target = Resolve(source, field.Path);
+
+            if (target is null)
             {
-                return firstNode.Kind == secondNode.Kind && ProjectedArrayEquals(firstNode.Children, secondNode.Children, current);
+                continue;
             }
 
-            return ProjectedObjectEquals(firstNode, secondNode, current);
-        }
+            var property = destination.AddNode(GetFieldName(field, target), isArrayIndex: false);
 
-        private static bool ProjectedArrayEquals(IReadOnlyList<JsonTree.Node> firstElements, IReadOnlyList<JsonTree.Node> secondElements, Projection current) =>
-            firstElements.Count == secondElements.Count && firstElements.Zip(secondElements).All(pair => ProjectedObjectEquals(pair.First, pair.Second, current));
-
-        private static bool ProjectedObjectEquals(JsonTree.Node firstNode, JsonTree.Node secondNode, Projection current)
-        {
-            foreach (var field in current.Fields)
+            if (field.Sub is null && field.ExplicitArray is false)
             {
-                var firstValue = Resolve(firstNode, field);
-                var secondValue = Resolve(secondNode, field);
-
-                if (firstValue is null || secondValue is null)
-                {
-                    if (ReferenceEquals(firstValue, secondValue) is false)
-                    {
-                        return false;
-                    }
-
-                    continue;
-                }
-
-                if (string.Equals(GetFieldName(field, firstValue), GetFieldName(field, secondValue), StringComparison.Ordinal) is false)
-                {
-                    return false;
-                }
-
-                var equal = field.Sub is null
-                    ? JsonNodeValueComparer.Instance.Equals(firstValue, secondValue)
-                    : field.ExplicitArray
-                        ? ProjectedArrayEquals(firstValue.Children, secondValue.Children, field.Sub)
-                        : ProjectedTargetEquals(firstValue, secondValue, field.Sub);
-
-                if (equal is false)
-                {
-                    return false;
-                }
+                CopyValue(target, property);
+                continue;
             }
 
-            return true;
-        }
-
-        private static int ProjectedTargetHash(JsonTree.Node node, Projection current)
-        {
-            var hash = new HashCode();
-
-            if (node.Kind == JsonValueKind.Array)
+            if (field.ExplicitArray || target.Kind == JsonValueKind.Array)
             {
-                hash.Add(ProjectedArrayHash(node.Children, current));
+                property.Kind = JsonValueKind.Array;
+
+                if (target.Kind == JsonValueKind.Array)
+                {
+                    ProjectArrayElements(target, field.Sub, property);
+                }
             }
             else
             {
-                hash.Add(ProjectedObjectHash(node, current));
+                ProjectFields(target, field.Sub!, property);
             }
-
-            return hash.ToHashCode();
-        }
-
-        private static int ProjectedArrayHash(IReadOnlyList<JsonTree.Node> elements, Projection current)
-        {
-            var hash = new HashCode();
-
-            foreach (var element in elements)
-            {
-                hash.Add(ProjectedObjectHash(element, current));
-            }
-
-            return hash.ToHashCode();
-        }
-
-        private static int ProjectedObjectHash(JsonTree.Node node, Projection current)
-        {
-            var hash = new HashCode();
-
-            foreach (var field in current.Fields)
-            {
-                var value = Resolve(node, field);
-
-                if (value is null)
-                {
-                    hash.Add(0);
-                    continue;
-                }
-
-                hash.Add(GetFieldName(field, value), StringComparer.Ordinal);
-                hash.Add(field.Sub is null
-                    ? JsonNodeValueComparer.Instance.GetHashCode(value)
-                    : field.ExplicitArray
-                        ? ProjectedArrayHash(value.Children, field.Sub)
-                        : ProjectedTargetHash(value, field.Sub));
-            }
-
-            return hash.ToHashCode();
-        }
-
-        private static JsonTree.Node? Resolve(JsonTree.Node parent, FieldExpr field)
-        {
-            var target = parent;
-
-            foreach (var segment in field.Path)
-            {
-                var child = target.FindChild(segment);
-
-                if (child is null)
-                {
-                    return null;
-                }
-
-                target = child;
-            }
-
-            return target;
         }
     }
+
+    private static void ProjectArrayElements(JsonTree.Node source, Projection? projection, JsonTree.Node destination)
+    {
+        foreach (var element in source.Children)
+        {
+            var child = destination.AddNode(destination.Children.Count.ToString(), isArrayIndex: true);
+
+            if (projection is null)
+            {
+                CopyValue(element, child);
+            }
+            else
+            {
+                ProjectFields(element, projection, child);
+            }
+        }
+    }
+
+    private static void CopyValue(JsonTree.Node source, JsonTree.Node destination)
+    {
+        destination.Kind = source.Kind;
+        destination.Value = source.Value;
+
+        foreach (var child in source.Children)
+        {
+            CopyValue(child, destination.AddNode(child.Name, child.InArray));
+        }
+    }
+
+    private static JsonTree.Node? Resolve(JsonTree.Node parent, IReadOnlyList<PathStep> path)
+    {
+        var target = parent;
+
+        foreach (var step in path)
+        {
+            target = target.FindChild(step);
+
+            if (target is null)
+            {
+                return null;
+            }
+        }
+
+        return target;
+    }
+
+    private static string GetFieldName(FieldExpr field, JsonTree.Node target) => field.Alias ?? (target.InArray ? field.Path.Last(step => step.Kind == StepKind.Name).Name! : target.Name);
 }

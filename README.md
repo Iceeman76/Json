@@ -67,6 +67,8 @@ $['first name']   →  key that is not a valid identifier
 
 Object, array, and scalar roots all round-trip through `ToJsonString()`. Numbers that cannot be represented exactly by `long`, `decimal`, or `double` use a `JsonNumber` value; its `Text` property preserves the original number without rounding, including very large or small exponents.
 
+`JsonNumber` also accepts manually supplied numeric text and validates that it contains a JSON number. Its `Text` property is immutable. The tree text view includes scalar and empty roots, such as `$ = 42` and `$ = []`.
+
 ## JsonFieldSelector
 
 Extracts and projects fields from a JSON document. Supports named properties, wildcards, and array indices.
@@ -117,6 +119,8 @@ Projections compose to arbitrary depth: each inner field may itself be plain, `f
 Any field inside a projection can be aliased with `alias:path` — the source path resolves normally and the emitted property name becomes `alias`. The alias may be combined with sub-projections, e.g. `info:person[name,age]` emits `{"info":{...}}`.
 
 Field names in projections and path segments prefer an **exact match**, then fall back to the first **case-insensitive** match. Quoted names can also appear in projections, for example `$['first name',age]` or `$[name:'first name']`. Whitespace inside quotes is preserved.
+
+Whitespace is allowed between query tokens, but cannot split an unquoted property name, array index, or operator.
 
 Wildcards always return arrays, including zero or one match. Array-valued matches remain nested: `$.*` applied to `{"items":[1,2]}` returns `[[1,2]]`. Array indices and `[*]` apply only to arrays.
 
@@ -252,6 +256,8 @@ X-Selector: $.items[name,price]
 ```
 
 Without the header the full payload is returned. The projection is applied by `SelectorMiddleware`, which buffers the response, parses it directly from the buffered UTF-8 bytes and writes the projected result back. If the `X-Selector` value has invalid syntax the middleware lets the exception propagate to the global exception handler (`UseDefaultExceptionHandler`) instead of silently returning the full response.
+
+Projection applies only to successful, non-empty JSON responses (`application/json` or an `application/*+json` media type). HTTP error responses, HEAD requests, empty bodies, and other content types pass through unchanged so that selectors do not hide error details.
 
 `Item` has several optional (nullable) properties (`Description`, `Price`, `Quantity`, `InStock`, `CreatedAt`). The serializer is configured with `DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull`, so any property that is `null` is omitted from the response entirely rather than emitted as `"field":null`.
 

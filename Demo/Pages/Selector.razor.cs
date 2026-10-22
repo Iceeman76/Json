@@ -164,7 +164,7 @@ public sealed partial class Selector : IDisposable
             return;
         }
 
-        JsonInput = _inputTree.ToJsonString(new JsonWriterOptions { Indented = indent });
+        JsonInput = _inputTree.ToJsonString(new JsonWriterOptions { Indented = indent, NewLine = "\n" });
         _parsedInput = JsonInput;
         var resultMinified = ResultMinified;
         ApplySelector();
@@ -303,7 +303,7 @@ public sealed partial class Selector : IDisposable
 
         if (ErrorMessage is null && _resultTree is not null)
         {
-            _displayedOutput = View == ResultView.Tree ? _resultTree.ToString() : _resultTree.ToJsonString(new JsonWriterOptions { Indented = ResultMinified is false });
+            _displayedOutput = View == ResultView.Tree ? _resultTree.ToString().Replace("\r\n", "\n") : _resultTree.ToJsonString(new JsonWriterOptions { Indented = ResultMinified is false, NewLine = "\n" });
         }
 
         if (ErrorMessage is null && View == ResultView.Json && _resultTree is not null)
@@ -447,7 +447,7 @@ public sealed partial class Selector : IDisposable
     {
         if (!ResultMinified)
         {
-            sb.AppendLine();
+            sb.Append('\n');
         }
     }
 
@@ -872,14 +872,11 @@ public sealed partial class Selector : IDisposable
 
     private async Task ApplySelectorDebounced()
     {
-        if (_selectorDebounceCts is not null)
-        {
-            await _selectorDebounceCts.CancelAsync();
-            _selectorDebounceCts.Dispose();
-        }
-
+        var previous = _selectorDebounceCts;
         var cts = new CancellationTokenSource();
         _selectorDebounceCts = cts;
+        previous?.Cancel();
+        previous?.Dispose();
 
         try
         {
@@ -890,7 +887,7 @@ public sealed partial class Selector : IDisposable
             return;
         }
 
-        if (cts.IsCancellationRequested)
+        if (cts.IsCancellationRequested || ReferenceEquals(_selectorDebounceCts, cts) is false)
         {
             return;
         }
