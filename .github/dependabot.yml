@@ -5,6 +5,7 @@ updates:
       - "/"
       - "/Benchmarks"
       - "/Demo"
+      - "/DemoTests"
       - "/Json"
       - "/JsonTests"
       - "/WebApi"
