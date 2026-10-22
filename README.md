@@ -63,7 +63,9 @@ $.matrix[0][1]    →  array indices
 $['first name']   →  key that is not a valid identifier
 ```
 
-`FindNode` accepts a JSONPath and returns the matching node, or `null` if not found. Lookup is case-insensitive.
+`FindNode` accepts a JSONPath and returns the matching node, or `null` if not found. Lookup prefers an exact property name and falls back to the first case-insensitive match at each level. Repeated identical property names resolve to the first occurrence.
+
+Object, array, and scalar roots all round-trip through `ToJsonString()`. Numbers that cannot be represented exactly by `long`, `decimal`, or `double` use a `JsonNumber` value; its `Text` property preserves the original number without rounding, including very large or small exponents.
 
 ## JsonFieldSelector
 
@@ -80,6 +82,7 @@ var result   = selector.Select("$.person.name");
 |---|---|
 | `$` | Entire document |
 | `$.a.b` | Scalar value or sub-object at path |
+| `$['first name']` | Property with spaces or other special characters; double quotes and escaped characters are also supported |
 | `$.items[*].name` | Array of `name` values from every element |
 | `$.items[*].category\|distinct` | Distinct category values, preserving first occurrence order |
 | `$.items.*` | Array of all property values of an object |
@@ -107,14 +110,17 @@ var result   = selector.Select("$.person.name");
 | `$.participants[-1]` | Negative index — counted from the end (`-1` is the last element) |
 | `$.matrix[1][0]` | Chained indices in nested arrays |
 | `$[home:participants[0].name]` | Indexed access inside a projection field, typically combined with an alias |
+| `$[items[0]]` | Indexed value projected under the array's property name, such as `{"items":10}` |
 
 Projections compose to arbitrary depth: each inner field may itself be plain, `field[*]`, `field[*][...]`, or `field[...]`. When the resolved node is an array, `field[...]` is treated as a per-element projection, so the explicit `[*]` is optional.
 
 Any field inside a projection can be aliased with `alias:path` — the source path resolves normally and the emitted property name becomes `alias`. The alias may be combined with sub-projections, e.g. `info:person[name,age]` emits `{"info":{...}}`.
 
-Field names in projections and path segments are matched **case-insensitively**.
+Field names in projections and path segments prefer an **exact match**, then fall back to the first **case-insensitive** match. Quoted names can also appear in projections, for example `$['first name',age]` or `$[name:'first name']`. Whitespace inside quotes is preserved.
 
-The recursive descent selector `$..name` visits every node in the document (pre-order / descendant order) and collects all properties matching `name` at any depth. Matching is **case-insensitive** (consistent with the rest of the library), and the result is **always a JSON array** (RFC 9535 nodelist semantics) — even for zero matches (`[]`) or a single match (`[value]`). A trailing projection such as `$..events[number,name]` is applied to each recursively matched node.
+Wildcards always return arrays, including zero or one match. Array-valued matches remain nested: `$.*` applied to `{"items":[1,2]}` returns `[[1,2]]`. Array indices and `[*]` apply only to arrays.
+
+The recursive descent selector `$..name` visits every node in the document (pre-order / descendant order) and collects all properties matching `name` at any depth. Matching is **case-insensitive** and includes every matching property, and the result is **always a JSON array** (RFC 9535 nodelist semantics) — even for zero matches (`[]`) or a single match (`[value]`). A trailing projection such as `$..events[number,name]` is applied to each recursively matched node.
 
 The recursive descent family extends beyond named properties:
 
@@ -128,6 +134,8 @@ All recursive-descent results follow the same nodelist semantics — they are al
 Append `|distinct` to remove duplicate values from a selector result. Distinct is applied after any projection, preserves the order of the first occurrence and works with scalar values as well as arrays and objects. Numbers are compared by numeric value, arrays are order-sensitive, and objects are compared structurally regardless of property order. JSON types remain distinct, so `1`, `"1"` and `true` are different values.
 
 The selector filters duplicates while processing the matched nodes and retains only the set of values already seen; it does not serialize a second complete result before deduplication.
+
+Distinct compares exact numeric values and works with both implicit and explicit array projections: `$.items[id]|distinct` and `$.items[*][id]|distinct` produce the same result.
 
 If a projection references a field that does not exist in the data (e.g. `$.person[Qname]`, or a field that is omitted because its value is `null`), that field is simply skipped in the output rather than causing an error. This keeps projections robust when working with optional/nullable fields that may be absent from the serialized JSON.
 
@@ -230,6 +238,8 @@ Returns a JSON object of the form `{ "itemCount": <int>, "items": [ ... ] }`. It
 GET /items?limit=10
 ```
 
+`limit` must be between 0 and 10,000 inclusive. Values outside this range return HTTP 400; omitting it still returns 1,000 items.
+
 Send an `X-Selector` header to project the response server-side:
 
 ```
@@ -262,6 +272,7 @@ dotnet run --project Demo
 Features:
 
 - **Live evaluation** — paste JSON, type a query, and the result updates automatically as either field changes (no "Run" button).
+- **Debounced editing** — JSON and query edits wait briefly for typing to pause. Parsed input is reused when only the query changes, and rendering reuses the parsed result.
 - **Built-in examples** — a dropdown of progressively complex examples that demonstrate every `JsonFieldSelector` feature listed in the syntax table above, filling in both the JSON and the query.
 - **Distinct examples** — explore unique scalar values, recursive matches and projected objects using `|distinct`.
 - **Result views** — toggle the output between syntax-highlighted JSON and the `JsonTree` text representation.
