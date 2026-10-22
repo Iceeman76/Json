@@ -9,7 +9,6 @@ public sealed partial class JsonTree
 {
     internal Node Root { get; }
     private Node[]? _flattened;
-    private Dictionary<string, Node>? _index;
 
     private JsonTree(Node rootNode)
     {
@@ -59,9 +58,31 @@ public sealed partial class JsonTree
             return Root;
         }
 
-        _index ??= Flatten().ToDictionary(x => x.JsonPath, StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrEmpty(jsonPath))
+        {
+            return null;
+        }
 
-        return _index.GetValueOrDefault(jsonPath);
+        var query = PathParser.Parse(jsonPath);
+
+        if (query.Terminal is not null || query.Distinct || query.Steps.Any(step => step.Kind is not (StepKind.Name or StepKind.Element)))
+        {
+            return null;
+        }
+
+        var node = Root;
+
+        foreach (var step in query.Steps)
+        {
+            node = node.FindChild(step);
+
+            if (node is null)
+            {
+                return null;
+            }
+        }
+
+        return node;
     }
 
     private void DoTraverse(JsonElement element, Node node)
@@ -116,14 +137,7 @@ public sealed partial class JsonTree
         var buffer = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(buffer, options);
 
-        writer.WriteStartNode(Root);
-
-        foreach (var node in Root.Children)
-        {
-            node.BuildRecursiveJson(writer);
-        }
-
-        writer.WriteEndNode(Root);
+        writer.WriteSubTree(Root);
         writer.Flush();
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
@@ -134,7 +148,6 @@ public sealed partial class JsonTree
     private void InvalidateCaches()
     {
         _flattened = null;
-        _index = null;
     }
 
     public override string ToString() => Root.BuildBranchString();

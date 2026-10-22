@@ -37,6 +37,14 @@ internal static class Utf8JsonWriterExtensions
     {
         switch (node.Value)
         {
+            case JsonNumber value:
+                if (inArray is false)
+                {
+                    writer.WritePropertyName(node.Name);
+                }
+
+                writer.WriteRawValue(value.Text);
+                break;
             case long value:
                 WriteLongNode(writer, node, inArray, value);
                 break;

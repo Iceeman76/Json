@@ -56,7 +56,32 @@ public sealed partial class JsonTree
                 return name;
             }
 
-            return $"['{name}']";
+            var escapedName = name.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
+
+            return $"['{escapedName}']";
+        }
+
+        internal Node? FindChild(PathStep step)
+        {
+            if (step.Kind == StepKind.Element)
+            {
+                if (Kind is not JsonValueKind.Array || int.TryParse(step.Name, out var index) is false)
+                {
+                    return null;
+                }
+
+                var resolvedIndex = index < 0 ? _children.Count + index : index;
+
+                return resolvedIndex >= 0 && resolvedIndex < _children.Count ? _children[resolvedIndex] : null;
+            }
+
+            if (Kind is not JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            return _children.FirstOrDefault(child => string.Equals(child.Name, step.Name, StringComparison.Ordinal))
+                ?? _children.FirstOrDefault(child => string.Equals(child.Name, step.Name, StringComparison.OrdinalIgnoreCase));
         }
 
         private string BuildJsonPath()

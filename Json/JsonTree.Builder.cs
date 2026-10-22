@@ -148,6 +148,10 @@ public sealed partial class JsonTree
                     node.Kind = JsonValueKind.Number;
                     node.Value = decimalValue;
                     break;
+                case JsonNumber number:
+                    node.Kind = JsonValueKind.Number;
+                    node.Value = number;
+                    break;
                 default:
                     throw new ArgumentException($"Unsupported JSON value type: {value.GetType().FullName}", nameof(value));
             }

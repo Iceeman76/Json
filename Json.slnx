@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="Benchmarks/Benchmarks.csproj" />
   <Project Path="Demo/Demo.csproj" />
+  <Project Path="DemoTests/DemoTests.csproj" />
   <Project Path="Json/Json.csproj" />
   <Project Path="JsonTests/JsonTests.csproj" />
   <Project Path="WebApi/WebApi.csproj" />

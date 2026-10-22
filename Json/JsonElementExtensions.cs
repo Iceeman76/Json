@@ -11,10 +11,33 @@ public static class JsonElementExtensions
             JsonValueKind.String => element.GetString(),
             JsonValueKind.True => true,
             JsonValueKind.False => false,
-            JsonValueKind.Number when element.TryGetInt64(out var value) => value,
-            JsonValueKind.Number when element.TryGetDecimal(out var value) => value,
-            JsonValueKind.Number => element.GetDouble(),
+            JsonValueKind.Number => GetNumber(element),
             _ => throw new JsonException($"Unsupported JSON value kind: {element.ValueKind}")
         };
+    }
+
+    private static object GetNumber(JsonElement element)
+    {
+        if (element.TryGetInt64(out var integer))
+        {
+            return integer;
+        }
+
+        var exactNumber = new JsonNumber(element.GetRawText());
+        var normalizedNumber = JsonNumber.Normalize(exactNumber);
+
+        if (element.TryGetDecimal(out var decimalNumber) && JsonNumber.Normalize(decimalNumber) == normalizedNumber)
+        {
+            return decimalNumber;
+        }
+
+        var doubleNumber = element.GetDouble();
+
+        if (double.IsFinite(doubleNumber) && JsonNumber.Normalize(doubleNumber) == normalizedNumber)
+        {
+            return doubleNumber;
+        }
+
+        return exactNumber;
     }
 }

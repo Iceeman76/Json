@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Text;
-using System.Text.Json;
 using Json;
 
 namespace JsonTests;
@@ -158,7 +157,7 @@ public class JsonFieldSelectorTests
         var selector = new JsonFieldSelector(jsonString);
         var result = selector.Select("$.crew.*");
 
-        const string expected = """[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]""";
+        const string expected = """[[{"id":1,"name":"Allan"},{"id":2,"name":"Bertil"}]]""";
 
         Assert.That(result, Is.EqualTo(expected));
     }

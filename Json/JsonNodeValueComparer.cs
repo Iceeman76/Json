@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 
 namespace Json;
@@ -119,15 +118,7 @@ internal sealed class JsonNodeValueComparer : IEqualityComparer<JsonTree.Node>
             return Equals(firstNode.Value, secondNode.Value);
         }
 
-        if (TryConvertToDecimal(firstNode.Value, out var firstNumber) && TryConvertToDecimal(secondNode.Value, out var secondNumber))
-        {
-            return firstNumber == secondNumber;
-        }
-
-        var firstDouble = Convert.ToDouble(firstNode.Value, CultureInfo.InvariantCulture);
-        var secondDouble = Convert.ToDouble(secondNode.Value, CultureInfo.InvariantCulture);
-
-        return firstDouble.Equals(secondDouble);
+        return JsonNumber.Normalize(firstNode.Value!) == JsonNumber.Normalize(secondNode.Value!);
     }
 
     private static int GetScalarHashCode(JsonTree.Node node)
@@ -137,27 +128,6 @@ internal sealed class JsonNodeValueComparer : IEqualityComparer<JsonTree.Node>
             return node.Value?.GetHashCode() ?? 0;
         }
 
-        if (TryConvertToDecimal(node.Value, out var number))
-        {
-            return number.GetHashCode();
-        }
-
-        return Convert.ToDouble(node.Value, CultureInfo.InvariantCulture).GetHashCode();
-    }
-
-    private static bool TryConvertToDecimal(object? value, out decimal number)
-    {
-        try
-        {
-            number = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
-
-            return true;
-        }
-        catch (OverflowException)
-        {
-            number = 0;
-
-            return false;
-        }
+        return JsonNumber.Normalize(node.Value!).GetHashCode();
     }
 }
