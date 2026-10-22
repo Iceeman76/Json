@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="assets/json-social-preview.png" alt="Json logo" width="1040" />
+</div>
+
 # Json
 
 A .NET library for parsing JSON into a navigable tree and extracting fields via a JSONPath-like query syntax.
