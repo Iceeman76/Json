@@ -5,10 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>13</LangVersion>
+        <RootNamespace>DotNetLab.Json</RootNamespace>
     </PropertyGroup>
-
-    <ItemGroup>
-        <Content Include=".aiassistant\rules\csharp-coding-rules.md"/>
-    </ItemGroup>
 
 </Project>

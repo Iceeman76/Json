@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Json;
+namespace DotNetLab.Json;
 
 internal static class PathExpressionWriter
 {

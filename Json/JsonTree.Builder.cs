@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Json;
+namespace DotNetLab.Json;
 
 public sealed partial class JsonTree
 {

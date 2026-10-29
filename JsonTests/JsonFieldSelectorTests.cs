@@ -1,8 +1,8 @@
 using System.Buffers;
 using System.Text;
-using Json;
+using DotNetLab.Json;
 
-namespace JsonTests;
+namespace DotNetLab.JsonTests;
 
 public class JsonFieldSelectorTests
 {

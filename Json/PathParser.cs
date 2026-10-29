@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace Json;
+namespace DotNetLab.Json;
 
 internal static class PathParser
 {

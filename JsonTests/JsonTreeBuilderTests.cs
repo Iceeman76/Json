@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Json;
+using DotNetLab.Json;
 
-namespace JsonTests;
+namespace DotNetLab.JsonTests;
 
 public class JsonTreeBuilderTests
 {

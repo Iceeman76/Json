@@ -1,4 +1,4 @@
-namespace Json;
+namespace DotNetLab.Json;
 
 internal enum StepKind
 {
