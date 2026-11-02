@@ -12,6 +12,7 @@ public static class JsonElementExtensions
             JsonValueKind.True => true,
             JsonValueKind.False => false,
             JsonValueKind.Number => GetNumber(element),
+            JsonValueKind.Undefined or JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.Null => throw new JsonException($"Unsupported JSON value kind: {element.ValueKind}"),
             _ => throw new JsonException($"Unsupported JSON value kind: {element.ValueKind}")
         };
     }

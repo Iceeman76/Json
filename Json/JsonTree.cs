@@ -100,6 +100,11 @@ public sealed partial class JsonTree
             case JsonValueKind.Null:
                 node.Value = null;
                 break;
+            case JsonValueKind.Undefined:
+            case JsonValueKind.String:
+            case JsonValueKind.Number:
+            case JsonValueKind.True:
+            case JsonValueKind.False:
             default:
                 node.Value = element.GetValue();
                 break;
@@ -143,7 +148,7 @@ public sealed partial class JsonTree
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    public Node[] Flatten() => _flattened ??= Root.Flatten().ToArray();
+    public Node[] Flatten() => _flattened ??= Root.Flatten();
 
     private void InvalidateCaches()
     {

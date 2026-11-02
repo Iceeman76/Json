@@ -23,8 +23,11 @@ public sealed class JsonRegressionTests
         const string json = """{"name":1,"Name":2,"other":3}""";
         var tree = JsonTree.Parse(json);
 
-        Assert.That(new JsonFieldSelector(tree).Select($"$.{name}"), Is.EqualTo(expected));
-        Assert.That(tree.FindNode($"$.{name}")!.Value!.ToString(), Is.EqualTo(expected));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(new JsonFieldSelector(tree).Select($"$.{name}"), Is.EqualTo(expected));
+            Assert.That(tree.FindNode($"$.{name}")!.Value!.ToString(), Is.EqualTo(expected));
+        }
     }
 
     [Test]
@@ -33,8 +36,11 @@ public sealed class JsonRegressionTests
         const string json = """{"person":{"name":1},"Person":{"other":2}}""";
         var tree = JsonTree.Parse(json);
 
-        Assert.That(tree.FindNode("$.person.other"), Is.Null);
-        Assert.That(new JsonFieldSelector(tree).Select("$.person.other"), Is.EqualTo("[]"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(tree.FindNode("$.person.other"), Is.Null);
+            Assert.That(new JsonFieldSelector(tree).Select("$.person.other"), Is.EqualTo("[]"));
+        }
     }
 
     [Test]
@@ -42,8 +48,11 @@ public sealed class JsonRegressionTests
     {
         var tree = JsonTree.Parse("""{"name":1,"name":2}""");
 
-        Assert.That(tree.FindNode("$.name")!.Value, Is.EqualTo(1));
-        Assert.That(new JsonFieldSelector(tree).Select("$[name]"), Is.EqualTo("""{"name":1}"""));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(tree.FindNode("$.name")!.Value, Is.EqualTo(1));
+            Assert.That(new JsonFieldSelector(tree).Select("$[name]"), Is.EqualTo("""{"name":1}"""));
+        }
     }
 
     [Test]
@@ -69,8 +78,11 @@ public sealed class JsonRegressionTests
         var tree = JsonTree.Create().Add(name, 42);
         var path = tree.Flatten()[0].JsonPath;
 
-        Assert.That(tree.FindNode(path)!.Value, Is.EqualTo(42));
-        Assert.That(new JsonFieldSelector(tree).Select(path), Is.EqualTo("42"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(tree.FindNode(path)!.Value, Is.EqualTo(42));
+            Assert.That(new JsonFieldSelector(tree).Select(path), Is.EqualTo("42"));
+        }
     }
 
     [TestCase(" $ [ 'first name' ] ")]
@@ -98,8 +110,11 @@ public sealed class JsonRegressionTests
     {
         var selector = new JsonFieldSelector("""[{"name":1},{"Name":1}]""");
 
-        Assert.That(selector.Select("$[*][name]|distinct"), Is.EqualTo("""[{"name":1},{"Name":1}]"""));
-        Assert.That(selector.Select("$[*][value:name]|distinct"), Is.EqualTo("""[{"value":1}]"""));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(selector.Select("$[*][name]|distinct"), Is.EqualTo("""[{"name":1},{"Name":1}]"""));
+            Assert.That(selector.Select("$[*][value:name]|distinct"), Is.EqualTo("""[{"value":1}]"""));
+        }
     }
 
     [TestCase("{}", "[]")]
@@ -153,9 +168,12 @@ public sealed class JsonRegressionTests
         var json = $"{{\"number\":{number}}}";
         var tree = JsonTree.Parse(json);
 
-        Assert.That(tree.ToJsonString(), Is.EqualTo(json));
-        Assert.That(new JsonFieldSelector(tree).Select("$.number"), Is.EqualTo(number));
-        Assert.That(tree.FindNode("$.number")!.Value, Is.TypeOf<JsonNumber>());
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(tree.ToJsonString(), Is.EqualTo(json));
+            Assert.That(new JsonFieldSelector(tree).Select("$.number"), Is.EqualTo(number));
+            Assert.That(tree.FindNode("$.number")!.Value, Is.TypeOf<JsonNumber>());
+        }
     }
 
     [TestCase("[0.123456789012345678901234567890,0.123456789012345678901234567891]")]

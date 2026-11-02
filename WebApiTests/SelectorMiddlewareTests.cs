@@ -58,8 +58,11 @@ public class SelectorMiddlewareTests
 
         await Invoke(context, WriteJson(error));
 
-        Assert.That(ReadBody(context), Is.EqualTo(error));
-        Assert.That(context.Response.StatusCode, Is.EqualTo(statusCode));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(ReadBody(context), Is.EqualTo(error));
+            Assert.That(context.Response.StatusCode, Is.EqualTo(statusCode));
+        }
     }
 
     [TestCase(200)]

@@ -23,6 +23,8 @@ public sealed partial class Selector : IDisposable
     private CancellationTokenSource? _copyResetCts;
 
     private bool? JsonValid { get; set; }
+    private string JsonValidityClass => JsonValid switch { true => "valid", false => "invalid", null => "" };
+    private string JsonValidityTitle => JsonValid switch { true => "Valid JSON", false => "Invalid JSON", null => "" };
     private double? ElapsedMs { get; set; }
     private int ResultCount { get; set; }
     private bool ShowCheatSheet { get; set; }
@@ -232,20 +234,29 @@ public sealed partial class Selector : IDisposable
 
         QueryCopied = true;
 
-        _copyResetCts?.Cancel();
-        _copyResetCts = new CancellationTokenSource();
-        var token = _copyResetCts.Token;
+        var previousCancellation = _copyResetCts;
+        var currentCancellation = new CancellationTokenSource();
+        var token = currentCancellation.Token;
+        _copyResetCts = currentCancellation;
+        await (previousCancellation?.CancelAsync() ?? Task.CompletedTask);
+        previousCancellation?.Dispose();
 
         try
         {
             await Task.Delay(1500, token);
-            QueryCopied = false;
-            StateHasChanged();
         }
         catch (TaskCanceledException)
         {
-            // A newer copy started; ignore.
+            return;
         }
+
+        if (token.IsCancellationRequested || ReferenceEquals(_copyResetCts, currentCancellation) is false)
+        {
+            return;
+        }
+
+        QueryCopied = false;
+        StateHasChanged();
     }
 
     private bool JsonPasted { get; set; }
@@ -265,20 +276,29 @@ public sealed partial class Selector : IDisposable
 
         JsonPasted = true;
 
-        _pasteResetCts?.Cancel();
-        _pasteResetCts = new CancellationTokenSource();
-        var token = _pasteResetCts.Token;
+        var previousCancellation = _pasteResetCts;
+        var currentCancellation = new CancellationTokenSource();
+        var token = currentCancellation.Token;
+        _pasteResetCts = currentCancellation;
+        await (previousCancellation?.CancelAsync() ?? Task.CompletedTask);
+        previousCancellation?.Dispose();
 
         try
         {
             await Task.Delay(1500, token);
-            JsonPasted = false;
-            StateHasChanged();
         }
         catch (TaskCanceledException)
         {
-            // A newer paste started; ignore.
+            return;
         }
+
+        if (token.IsCancellationRequested || ReferenceEquals(_pasteResetCts, currentCancellation) is false)
+        {
+            return;
+        }
+
+        JsonPasted = false;
+        StateHasChanged();
     }
 
     private enum ResultView
@@ -347,6 +367,12 @@ public sealed partial class Selector : IDisposable
             case JsonValueKind.Array:
                 RenderArray(node, sb, indent);
                 break;
+            case JsonValueKind.Undefined:
+            case JsonValueKind.String:
+            case JsonValueKind.Number:
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
             default:
                 RenderScalar(node, sb);
                 break;
@@ -437,6 +463,10 @@ public sealed partial class Selector : IDisposable
                     .Append(node.Kind == JsonValueKind.True ? "true" : "false")
                     .Append("</span>");
                 break;
+            case JsonValueKind.Undefined:
+            case JsonValueKind.Object:
+            case JsonValueKind.Array:
+            case JsonValueKind.Null:
             default:
                 sb.Append("<span class=\"tok-null\" title=\"").Append(title).Append("\">null</span>");
                 break;
@@ -872,22 +902,23 @@ public sealed partial class Selector : IDisposable
 
     private async Task ApplySelectorDebounced()
     {
-        var previous = _selectorDebounceCts;
-        var cts = new CancellationTokenSource();
-        _selectorDebounceCts = cts;
-        previous?.Cancel();
-        previous?.Dispose();
+        var previousCancellation = _selectorDebounceCts;
+        var currentCancellation = new CancellationTokenSource();
+        var token = currentCancellation.Token;
+        _selectorDebounceCts = currentCancellation;
+        await (previousCancellation?.CancelAsync() ?? Task.CompletedTask);
+        previousCancellation?.Dispose();
 
         try
         {
-            await Task.Delay(SelectorDebounceMs, cts.Token);
+            await Task.Delay(SelectorDebounceMs, token);
         }
         catch (TaskCanceledException)
         {
             return;
         }
 
-        if (cts.IsCancellationRequested || ReferenceEquals(_selectorDebounceCts, cts) is false)
+        if (token.IsCancellationRequested || ReferenceEquals(_selectorDebounceCts, currentCancellation) is false)
         {
             return;
         }
@@ -928,7 +959,7 @@ public sealed partial class Selector : IDisposable
             stopwatch.Stop();
 
             ElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
-            _resultTree = JsonTree.Parse(Result);
+            _resultTree = JsonTree.Parse(Result, maxDepth: 1000);
             var root = _resultTree.FindNode("$")!;
             ResultCount = root.Kind == JsonValueKind.Array ? root.Children.Count : 1;
         }

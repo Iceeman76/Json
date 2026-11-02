@@ -4,7 +4,7 @@ using DotNetLab.Json;
 
 namespace WebApi.Selector;
 
-public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMiddleware> logger)
+public sealed partial class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMiddleware> logger)
 {
     private const string SelectorHeaderName = "X-Selector";
 
@@ -14,12 +14,13 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
 
         if (string.IsNullOrWhiteSpace(selector))
         {
-            logger.LogDebug("No selector header present, passing response through unchanged");
+            LogNoSelector(logger);
             await next(context);
+
             return;
         }
 
-        logger.LogInformation("Applying selector {Selector} to {Path}", selector, context.Request.Path);
+        LogApplyingSelector(logger, selector, context.Request.Path);
 
         var originalBody = context.Response.Body;
         using var buffer = new MemoryStream();
@@ -36,9 +37,10 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
 
         if (buffer.Length == 0 || HttpMethods.IsHead(context.Request.Method) || context.Response.StatusCode is < 200 or >= 300 || IsJsonResponse(context) is false)
         {
-            logger.LogDebug("Selector skipped for response with status {StatusCode} and content type {ContentType}", context.Response.StatusCode, context.Response.ContentType);
+            LogSelectorSkipped(logger, context.Response.StatusCode, context.Response.ContentType);
             buffer.Position = 0;
             await buffer.CopyToAsync(originalBody, context.RequestAborted);
+
             return;
         }
 
@@ -50,8 +52,20 @@ public sealed class SelectorMiddleware(RequestDelegate next, ILogger<SelectorMid
         context.Response.ContentLength = projection.WrittenCount;
         await originalBody.WriteAsync(projection.WrittenMemory, context.RequestAborted);
 
-        logger.LogInformation("Selector applied, response reduced from {OriginalBytes} to {ProjectedBytes} bytes", buffer.Length, projection.WrittenCount);
+        LogSelectorApplied(logger, buffer.Length, projection.WrittenCount);
     }
+
+    [LoggerMessage(0, LogLevel.Debug, "No selector header present, passing response through unchanged")]
+    private static partial void LogNoSelector(ILogger logger);
+
+    [LoggerMessage(1, LogLevel.Information, "Applying selector {Selector} to {Path}")]
+    private static partial void LogApplyingSelector(ILogger logger, string selector, PathString path);
+
+    [LoggerMessage(2, LogLevel.Debug, "Selector skipped for response with status {StatusCode} and content type {ContentType}")]
+    private static partial void LogSelectorSkipped(ILogger logger, int statusCode, string? contentType);
+
+    [LoggerMessage(3, LogLevel.Information, "Selector applied, response reduced from {OriginalBytes} to {ProjectedBytes} bytes")]
+    private static partial void LogSelectorApplied(ILogger logger, long originalBytes, int projectedBytes);
 
     private static bool IsJsonResponse(HttpContext context)
     {

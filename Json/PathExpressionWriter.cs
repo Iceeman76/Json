@@ -200,7 +200,7 @@ internal static class PathExpressionWriter
         return result;
     }
 
-    private static void WriteProjectionResults(Utf8JsonWriter writer, IReadOnlyList<JsonTree.Node> targets, bool forceWrap, Projection projection)
+    private static void WriteProjectionResults(Utf8JsonWriter writer, List<JsonTree.Node> targets, bool forceWrap, Projection projection)
     {
         if (forceWrap is false && targets.Count == 1)
         {

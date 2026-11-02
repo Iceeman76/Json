@@ -159,7 +159,7 @@ internal static class Utf8JsonWriterExtensions
         }
     }
 
-    public static void WriteStartNode(this Utf8JsonWriter writer, JsonTree.Node node)
+    private static void WriteStartNode(this Utf8JsonWriter writer, JsonTree.Node node)
     {
         if (node.Kind is JsonValueKind.Array)
         {

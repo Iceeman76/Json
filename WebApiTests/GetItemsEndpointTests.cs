@@ -49,8 +49,11 @@ public sealed class GetItemsEndpointTests
     {
         var response = await _client.GetFromJsonAsync<GetItemsResponse>($"/items?limit={limit}");
 
-        Assert.That(response!.ItemCount, Is.EqualTo(limit));
-        Assert.That(response.Items, Has.Length.EqualTo(limit));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(response!.ItemCount, Is.EqualTo(limit));
+            Assert.That(response.Items, Has.Length.EqualTo(limit));
+        }
     }
 
     [Test]
@@ -68,8 +71,11 @@ public sealed class GetItemsEndpointTests
         request.Headers.Add("X-Selector", "$.items[name]");
         using var response = await _client.SendAsync(request);
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        Assert.That(await response.Content.ReadAsStringAsync(), Is.EqualTo("""[{"name":"Keyboard #1"}]"""));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(await response.Content.ReadAsStringAsync(), Is.EqualTo("""[{"name":"Keyboard #1"}]"""));
+        }
     }
 
     [Test]
@@ -79,7 +85,10 @@ public sealed class GetItemsEndpointTests
         request.Headers.Add("X-Selector", "$.items[name]");
         using var response = await _client.SendAsync(request);
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-        Assert.That(await response.Content.ReadAsStringAsync(), Does.Contain("errors"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            Assert.That(await response.Content.ReadAsStringAsync(), Does.Contain("errors"));
+        }
     }
 }

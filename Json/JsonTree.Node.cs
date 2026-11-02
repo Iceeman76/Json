@@ -56,7 +56,7 @@ public sealed partial class JsonTree
                 return name;
             }
 
-            var escapedName = name.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
+            var escapedName = name.Replace(@"\", @"\\").Replace("'", @"\'").Replace("\n", @"\n").Replace("\r", @"\r").Replace("\t", @"\t");
 
             return $"['{escapedName}']";
         }
@@ -131,7 +131,7 @@ public sealed partial class JsonTree
 
             CollectNodes(result);
 
-            return result.ToArray();
+            return [.. result];
         }
 
         private void CollectNodes(List<Node> result)
@@ -161,17 +161,14 @@ public sealed partial class JsonTree
                 {
                     sb.Append(':');
                 }
-                else if (Kind is JsonValueKind.Object)
-                {
-                    sb.Append(" = {}");
-                }
-                else if (Kind is JsonValueKind.Array)
-                {
-                    sb.Append(" = []");
-                }
                 else
                 {
-                    sb.Append(" = ").Append(Value ?? "null");
+                    sb.Append(Kind switch
+                    {
+                        JsonValueKind.Object => " = {}",
+                        JsonValueKind.Array => " = []",
+                        _ => $" = {Value ?? "null"}"
+                    });
                 }
 
                 sb.Append($" (Kind={Kind}, Name={Name})");
@@ -186,6 +183,13 @@ public sealed partial class JsonTree
 
         public void BuildRecursiveJson(Utf8JsonWriter writer)
         {
+            if (_parent is null)
+            {
+                writer.WriteSubTree(this);
+
+                return;
+            }
+
             writer.WriteNode(this, InArray);
 
             foreach (var node in _children)

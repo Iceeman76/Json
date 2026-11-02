@@ -47,9 +47,10 @@ public sealed partial class JsonTree
         public Node Add(string name, object? value)
         {
             EnsureObject();
-
+            var (kind, storedValue) = ConvertValue(value);
             var node = AddNode(name, isArrayIndex: false);
-            SetValue(node, value);
+            node.Kind = kind;
+            node.Value = storedValue;
 
             return this;
         }
@@ -57,9 +58,10 @@ public sealed partial class JsonTree
         public Node Add(object? value)
         {
             EnsureArray();
-
+            var (kind, storedValue) = ConvertValue(value);
             var node = AddNode(_children.Count.ToString(), isArrayIndex: true);
-            SetValue(node, value);
+            node.Kind = kind;
+            node.Value = storedValue;
 
             return this;
         }
@@ -112,49 +114,21 @@ public sealed partial class JsonTree
             return this;
         }
 
-        private static void SetValue(Node node, object? value)
+        private static (JsonValueKind Kind, object? Value) ConvertValue(object? value)
         {
-            switch (value)
+            return value switch
             {
-                case null:
-                    node.Kind = JsonValueKind.Null;
-                    node.Value = null;
-                    break;
-                case string stringValue:
-                    node.Kind = JsonValueKind.String;
-                    node.Value = stringValue;
-                    break;
-                case bool boolValue:
-                    node.Kind = boolValue ? JsonValueKind.True : JsonValueKind.False;
-                    node.Value = boolValue;
-                    break;
-                case byte or sbyte or short or ushort or int or uint or long:
-                    node.Kind = JsonValueKind.Number;
-                    node.Value = Convert.ToInt64(value);
-                    break;
-                case ulong ulongValue:
-                    node.Kind = JsonValueKind.Number;
-                    node.Value = ulongValue <= long.MaxValue ? Convert.ToInt64(ulongValue) : Convert.ToDecimal(ulongValue);
-                    break;
-                case float floatValue:
-                    node.Kind = JsonValueKind.Number;
-                    node.Value = Convert.ToDouble(floatValue);
-                    break;
-                case double doubleValue:
-                    node.Kind = JsonValueKind.Number;
-                    node.Value = doubleValue;
-                    break;
-                case decimal decimalValue:
-                    node.Kind = JsonValueKind.Number;
-                    node.Value = decimalValue;
-                    break;
-                case JsonNumber number:
-                    node.Kind = JsonValueKind.Number;
-                    node.Value = number;
-                    break;
-                default:
-                    throw new ArgumentException($"Unsupported JSON value type: {value.GetType().FullName}", nameof(value));
-            }
+                null => (JsonValueKind.Null, null),
+                string stringValue => (JsonValueKind.String, stringValue),
+                bool boolValue => (boolValue ? JsonValueKind.True : JsonValueKind.False, boolValue),
+                byte or sbyte or short or ushort or int or uint or long => (JsonValueKind.Number, Convert.ToInt64(value)),
+                ulong ulongValue => (JsonValueKind.Number, ulongValue <= long.MaxValue ? Convert.ToInt64(ulongValue) : Convert.ToDecimal(ulongValue)),
+                float floatValue => (JsonValueKind.Number, Convert.ToDouble(floatValue)),
+                double doubleValue => (JsonValueKind.Number, doubleValue),
+                decimal decimalValue => (JsonValueKind.Number, decimalValue),
+                JsonNumber number => (JsonValueKind.Number, number),
+                _ => throw new ArgumentException($"Unsupported JSON value type: {value.GetType().FullName}", nameof(value))
+            };
         }
 
         private void EnsureObject()

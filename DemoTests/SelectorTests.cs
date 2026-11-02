@@ -1,8 +1,10 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using Bunit;
 using Demo.Pages;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace DemoTests;
 
@@ -33,8 +35,11 @@ public sealed class SelectorTests
         });
         await Task.WhenAll(pendingInputs);
 
-        Assert.That(component.Find("#result-output").TextContent, Does.Contain("2"));
-        Assert.That(component.Find(".validity").ClassList, Does.Contain("valid"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#result-output").TextContent, Does.Contain("2"));
+            Assert.That(component.Find(".validity").ClassList, Does.Contain("valid"));
+        }
     }
 
     [Test]
@@ -47,8 +52,11 @@ public sealed class SelectorTests
 
         await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = "42" });
 
-        Assert.That(component.Find("#result-output").TextContent, Is.EqualTo("42"));
-        Assert.That(component.Find("#result-output").ClassList, Does.Not.Contain("output-error"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#result-output").TextContent, Is.EqualTo("42"));
+            Assert.That(component.Find("#result-output").ClassList, Does.Not.Contain("output-error"));
+        }
     }
 
     [Test]
@@ -66,15 +74,17 @@ public sealed class SelectorTests
     {
         var component = _context.Render<Selector>();
         await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = "{\"name\":\"Åsa\",\"items\":[1,2]}" });
-        component.Find("button[title='Minify result']").Click();
+        await component.Find("button[title='Minify result']").ClickAsync(new MouseEventArgs());
         var result = component.Find("#result-output").TextContent;
-        component.Find("button[title='Format JSON']").Click();
-
-        Assert.That(component.Find("#result-output").TextContent, Is.EqualTo(result));
-        Assert.That(component.Find("#output-gutter").TextContent.Trim(), Is.EqualTo("1"));
+        await component.Find("button[title='Format JSON']").ClickAsync(new MouseEventArgs());
         var expectedBytes = Encoding.UTF8.GetByteCount(result).ToString("#,0", CultureInfo.InvariantCulture);
 
-        Assert.That(component.FindAll(".panel-header")[1].TextContent, Does.Contain($"{expectedBytes} bytes"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#result-output").TextContent, Is.EqualTo(result));
+            Assert.That(component.Find("#output-gutter").TextContent.Trim(), Is.EqualTo("1"));
+            Assert.That(component.FindAll(".panel-header")[1].TextContent, Does.Contain($"{expectedBytes} bytes"));
+        }
     }
 
     [Test]
@@ -82,11 +92,11 @@ public sealed class SelectorTests
     {
         var component = _context.Render<Selector>();
         await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = "{\"number\":0.123456789012345678901234567891}" });
-        component.Find("button[title='Format result']").Click();
+        await component.Find("button[title='Format result']").ClickAsync(new MouseEventArgs());
 
         Assert.That(component.Find("#result-output").TextContent, Does.Contain("0.123456789012345678901234567891"));
 
-        component.FindAll(".btn-group button")[1].Click();
+        await component.FindAll(".btn-group button")[1].ClickAsync(new MouseEventArgs());
 
         Assert.That(component.Find("#result-output").TextContent, Does.Contain("0.123456789012345678901234567891"));
     }
@@ -110,9 +120,39 @@ public sealed class SelectorTests
     {
         var component = _context.Render<Selector>();
         await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = json });
-        component.FindAll(".btn-group button")[1].Click();
+        await component.FindAll(".btn-group button")[1].ClickAsync(new MouseEventArgs());
 
         Assert.That(component.Find("#result-output").TextContent, Does.StartWith($"$ = {json}"));
+    }
+
+    [Test]
+    public async Task Generated_results_can_exceed_the_input_depth_limit()
+    {
+        var nestedArrays = new string('[', 63) + "0" + new string(']', 63);
+        var component = _context.Render<Selector>();
+        await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = "{\"x\":" + nestedArrays + "}" });
+        await component.Find("#selector-input").InputAsync(new ChangeEventArgs { Value = "$..[value:x]" });
+        var expected = "[{\"value\":" + nestedArrays + "}]";
+        await component.Find("button[title='Minify result']").ClickAsync(new MouseEventArgs());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#result-output").ClassList, Does.Not.Contain("output-error"));
+            Assert.That(component.Find("#result-output").TextContent, Is.EqualTo(expected));
+        }
+
+        await component.Find("button[title='Format result']").ClickAsync(new MouseEventArgs());
+        using var document = JsonDocument.Parse(component.Find("#result-output").TextContent, new JsonDocumentOptions { MaxDepth = 1000 });
+
+        Assert.That(document.RootElement[0].GetProperty("value").GetRawText().Count(character => character is '['), Is.EqualTo(63));
+
+        await component.FindAll(".btn-group button")[1].ClickAsync(new MouseEventArgs());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#result-output").TextContent, Does.Contain("$[0].value[0]"));
+            Assert.That(component.Find("#result-output").ClassList, Does.Not.Contain("output-error"));
+        }
     }
 
     [Test]
@@ -127,8 +167,11 @@ public sealed class SelectorTests
         });
         await pendingInput;
 
-        Assert.That(component.Find("#result-output").TextContent, Does.Contain("Junie"));
-        Assert.That(component.Find("#result-output").ClassList, Does.Not.Contain("output-error"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#result-output").TextContent, Does.Contain("Junie"));
+            Assert.That(component.Find("#result-output").ClassList, Does.Not.Contain("output-error"));
+        }
     }
 
     [Test]
@@ -139,5 +182,53 @@ public sealed class SelectorTests
         await _context.DisposeComponentsAsync();
 
         Assert.That(async () => await pendingInput, Throws.Nothing);
+    }
+
+    [TestCase("Copy query")]
+    [TestCase("Paste JSON")]
+    public async Task Repeated_clipboard_actions_keep_the_latest_indicator_active(string buttonTitle)
+    {
+        _context.JSInterop.Setup<bool>("clipboardCopy.copyText", invocation => invocation.Arguments.Count is 1).SetResult(true);
+        _context.JSInterop.Setup<string?>("clipboardCopy.readText").SetResult("{\"value\":42}");
+        var component = _context.Render<Selector>();
+        var pendingActions = new List<Task>();
+        await component.InvokeAsync(() =>
+        {
+            for (var actionIndex = 0; actionIndex < 3; actionIndex++)
+            {
+                pendingActions.Add(component.Find($"button[title='{buttonTitle}']").ClickAsync(new MouseEventArgs()));
+            }
+        });
+        await Task.WhenAll(pendingActions.Take(2)).WaitAsync(TimeSpan.FromSeconds(5));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(pendingActions[2].IsCompleted, Is.False);
+            Assert.That(component.Find($"button[title='{buttonTitle}']").ClassList, Does.Contain("copied"));
+        }
+
+        await pendingActions[2].WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.That(component.Find($"button[title='{buttonTitle}']").ClassList, Does.Not.Contain("copied"));
+    }
+
+    [TestCase("Copy query")]
+    [TestCase("Paste JSON")]
+    public async Task Disposing_the_component_cancels_pending_clipboard_actions(string buttonTitle)
+    {
+        _context.JSInterop.Setup<bool>("clipboardCopy.copyText", invocation => invocation.Arguments.Count is 1).SetResult(true);
+        _context.JSInterop.Setup<string?>("clipboardCopy.readText").SetResult("{\"value\":42}");
+        var component = _context.Render<Selector>();
+        var pendingActions = new List<Task>();
+        await component.InvokeAsync(() =>
+        {
+            for (var actionIndex = 0; actionIndex < 3; actionIndex++)
+            {
+                pendingActions.Add(component.Find($"button[title='{buttonTitle}']").ClickAsync(new MouseEventArgs()));
+            }
+        });
+        await _context.DisposeComponentsAsync();
+
+        Assert.That(async () => await Task.WhenAll(pendingActions).WaitAsync(TimeSpan.FromSeconds(5)), Throws.Nothing);
     }
 }

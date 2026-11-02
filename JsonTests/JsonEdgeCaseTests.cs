@@ -63,8 +63,11 @@ public sealed class JsonEdgeCaseTests
     {
         var number = new JsonNumber("  1e400 \r\n");
 
-        Assert.That(number.Text, Is.EqualTo("1e400"));
-        Assert.That(JsonTree.Create().Add("number", number).ToJsonString(), Is.EqualTo("""{"number":1e400}"""));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(number.Text, Is.EqualTo("1e400"));
+            Assert.That(JsonTree.Create().Add("number", number).ToJsonString(), Is.EqualTo("""{"number":1e400}"""));
+        }
     }
 
     [TestCase("$.first name")]

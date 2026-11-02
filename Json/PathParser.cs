@@ -39,12 +39,9 @@ internal static class PathParser
         var terminal = cursor.HasMore && cursor.Peek() == '[' ? ParseProjection(cursor) : null;
         var distinct = cursor.TryRead("|distinct");
 
-        if (cursor.HasMore)
-        {
-            throw new FormatException($"Unexpected character at position {cursor.Position} in '{expression}'.");
-        }
-
-        return new PathQuery(steps, hasArrayWildcard, terminal, recursiveAlias, distinct);
+        return cursor.HasMore
+            ? throw new FormatException($"Unexpected character at position {cursor.Position} in '{expression}'.")
+            : new PathQuery(steps, hasArrayWildcard, terminal, recursiveAlias, distinct);
     }
 
     private static string NormalizeWhitespace(string pathExpression)
@@ -58,11 +55,13 @@ internal static class PathParser
 
         foreach (var c in pathExpression)
         {
-            if (char.IsWhiteSpace(c))
+            if (char.IsWhiteSpace(c) is false)
             {
-                hasWhitespace = true;
-                break;
+                continue;
             }
+
+            hasWhitespace = true;
+            break;
         }
 
         if (!hasWhitespace)
@@ -128,67 +127,68 @@ internal static class PathParser
 
     private static PathStep ParseStep(Cursor cursor)
     {
-        if (cursor.Peek() == '.')
+        if (cursor.Peek() is not '.')
+        {
+            if (cursor.LooksLikeWildcardBracket() is false)
+            {
+                return cursor.LooksLikeQuotedBracket()
+                    ? new PathStep(StepKind.Name, cursor.ReadQuotedBracket())
+                    : new PathStep(StepKind.Element, cursor.ReadIndex());
+            }
+
+            cursor.Skip("[*]");
+
+            return new PathStep(StepKind.AllElements, null);
+        }
+
+        cursor.Advance();
+
+        if (cursor.HasMore is false || cursor.Peek() is not '.')
+        {
+            if (cursor.HasMore is false || cursor.Peek() is not '*')
+            {
+                return new PathStep(StepKind.Name, cursor.ReadIdentifier());
+            }
+
+            cursor.Advance();
+
+            return new PathStep(StepKind.AllChildren, null);
+        }
+
+        cursor.Advance();
+
+        if (cursor.HasMore && cursor.Peek() == '*')
         {
             cursor.Advance();
 
-            if (cursor.HasMore && cursor.Peek() == '.')
-            {
-                cursor.Advance();
+            return new PathStep(StepKind.RecursiveAll, null);
+        }
 
-                if (cursor.HasMore && cursor.Peek() == '*')
-                {
-                    cursor.Advance();
-                    return new PathStep(StepKind.RecursiveAll, null);
-                }
+        if (cursor.HasMore is false || cursor.Peek() is not '[')
+        {
+            return new PathStep(StepKind.RecursiveName, cursor.ReadIdentifier());
+        }
 
-                if (cursor.HasMore && cursor.Peek() == '[')
-                {
-                    if (cursor.LooksLikeQuotedBracket())
-                    {
-                        return new PathStep(StepKind.RecursiveName, cursor.ReadQuotedBracket());
-                    }
-
-                    if (cursor.LooksLikeWildcardBracket())
-                    {
-                        cursor.Skip("[*]");
-                        return new PathStep(StepKind.RecursiveAllElements, null);
-                    }
-
-                    if (cursor.LooksLikeAliasBracket())
-                    {
-                        var aliasedName = cursor.ReadAliasBracket(out var bracketAlias);
-                        return new PathStep(StepKind.RecursiveName, aliasedName, bracketAlias);
-                    }
-
-                    return new PathStep(StepKind.RecursiveElement, cursor.ReadIndex());
-                }
-
-                return new PathStep(StepKind.RecursiveName, cursor.ReadIdentifier());
-            }
-
-            if (cursor.HasMore && cursor.Peek() == '*')
-            {
-                cursor.Advance();
-                return new PathStep(StepKind.AllChildren, null);
-            }
-
-            return new PathStep(StepKind.Name, cursor.ReadIdentifier());
+        if (cursor.LooksLikeQuotedBracket())
+        {
+            return new PathStep(StepKind.RecursiveName, cursor.ReadQuotedBracket());
         }
 
         if (cursor.LooksLikeWildcardBracket())
         {
             cursor.Skip("[*]");
 
-            return new PathStep(StepKind.AllElements, null);
+            return new PathStep(StepKind.RecursiveAllElements, null);
         }
 
-        if (cursor.LooksLikeQuotedBracket())
+        if (cursor.LooksLikeAliasBracket() is false)
         {
-            return new PathStep(StepKind.Name, cursor.ReadQuotedBracket());
+            return new PathStep(StepKind.RecursiveElement, cursor.ReadIndex());
         }
 
-        return new PathStep(StepKind.Element, cursor.ReadIndex());
+        var aliasedName = cursor.ReadAliasBracket(out var bracketAlias);
+
+        return new PathStep(StepKind.RecursiveName, aliasedName, bracketAlias);
     }
 
     private static Projection ParseProjection(Cursor cursor)
@@ -264,24 +264,22 @@ internal static class PathParser
 
     private sealed class Cursor(string text)
     {
-        private int _position;
+        public bool HasMore => Position < text.Length;
 
-        public bool HasMore => _position < text.Length;
+        public int Position { get; private set; }
 
-        public int Position => _position;
+        public char Peek() => text[Position];
 
-        public char Peek() => text[_position];
-
-        public void Advance() => _position++;
+        public void Advance() => Position++;
 
         public void Expect(char c)
         {
-            if (!HasMore || text[_position] != c)
+            if (!HasMore || text[Position] != c)
             {
-                throw new FormatException($"Expected '{c}' at position {_position} in '{text}'.");
+                throw new FormatException($"Expected '{c}' at position {Position} in '{text}'.");
             }
 
-            _position++;
+            Position++;
         }
 
         public void Skip(string token)
@@ -294,45 +292,45 @@ internal static class PathParser
 
         public bool TryRead(string token)
         {
-            if (!text.AsSpan(_position).StartsWith(token, StringComparison.Ordinal))
+            if (!text.AsSpan(Position).StartsWith(token, StringComparison.Ordinal))
             {
                 return false;
             }
 
-            _position += token.Length;
+            Position += token.Length;
             return true;
         }
 
         public bool LooksLikeWildcardBracket()
         {
-            return _position + 2 < text.Length
-                && text[_position] == '['
-                && text[_position + 1] == '*'
-                && text[_position + 2] == ']';
+            return Position + 2 < text.Length
+                && text[Position] == '['
+                && text[Position + 1] == '*'
+                && text[Position + 2] == ']';
         }
 
         public bool LooksLikeIndexBracket()
         {
-            if (_position + 1 >= text.Length || text[_position] != '[')
+            if (Position + 1 >= text.Length || text[Position] != '[')
             {
                 return false;
             }
 
-            var next = text[_position + 1];
+            var next = text[Position + 1];
 
             return char.IsAsciiDigit(next) || next == '-';
         }
 
         public bool LooksLikeQuotedBracket()
         {
-            if (_position + 1 >= text.Length || text[_position] is not '[' || text[_position + 1] is not ('\'' or '"'))
+            if (Position + 1 >= text.Length || text[Position] is not '[' || text[Position + 1] is not ('\'' or '"'))
             {
                 return false;
             }
 
-            var quote = text[_position + 1];
+            var quote = text[Position + 1];
 
-            for (var scan = _position + 2; scan < text.Length; scan++)
+            for (var scan = Position + 2; scan < text.Length; scan++)
             {
                 if (text[scan] == '\\')
                 {
@@ -347,7 +345,7 @@ internal static class PathParser
             return true;
         }
 
-        public string ReadName() => HasMore && text[_position] is '\'' or '"' ? ReadQuotedName() : ReadIdentifier();
+        public string ReadName() => HasMore && text[Position] is '\'' or '"' ? ReadQuotedName() : ReadIdentifier();
 
         public string ReadQuotedBracket()
         {
@@ -360,12 +358,12 @@ internal static class PathParser
 
         private string ReadQuotedName()
         {
-            var quote = text[_position++];
+            var quote = text[Position++];
             var name = new StringBuilder();
 
             while (HasMore)
             {
-                var character = text[_position++];
+                var character = text[Position++];
 
                 if (character == quote)
                 {
@@ -379,17 +377,17 @@ internal static class PathParser
                         throw new FormatException("Unterminated escape in property name.");
                     }
 
-                    character = text[_position++];
+                    character = text[Position++];
 
                     if (character == 'u')
                     {
-                        if (_position + 4 > text.Length || ushort.TryParse(text.AsSpan(_position, 4), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var unicode) is false)
+                        if (Position + 4 > text.Length || ushort.TryParse(text.AsSpan(Position, 4), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var unicode) is false)
                         {
                             throw new FormatException("Invalid Unicode escape in property name.");
                         }
 
                         name.Append((char)unicode);
-                        _position += 4;
+                        Position += 4;
                         continue;
                     }
 
@@ -416,12 +414,12 @@ internal static class PathParser
 
         public bool LooksLikeAliasBracket()
         {
-            if (_position >= text.Length || text[_position] != '[')
+            if (Position >= text.Length || text[Position] != '[')
             {
                 return false;
             }
 
-            var scan = _position + 1;
+            var scan = Position + 1;
 
             if (scan >= text.Length || !IsIdentifierStart(text[scan]))
             {
@@ -453,26 +451,26 @@ internal static class PathParser
         {
             Expect('[');
 
-            var start = _position;
+            var start = Position;
 
-            if (HasMore && text[_position] == '-')
+            if (HasMore && text[Position] == '-')
             {
-                _position++;
+                Position++;
             }
 
-            var digitsStart = _position;
+            var digitsStart = Position;
 
-            while (HasMore && char.IsAsciiDigit(text[_position]))
+            while (HasMore && char.IsAsciiDigit(text[Position]))
             {
-                _position++;
+                Position++;
             }
 
-            if (_position == digitsStart)
+            if (Position == digitsStart)
             {
-                throw new FormatException($"Expected array index at position {_position} in '{text}'.");
+                throw new FormatException($"Expected array index at position {Position} in '{text}'.");
             }
 
-            var index = text[start.._position];
+            var index = text[start..Position];
 
             Expect(']');
 
@@ -481,21 +479,21 @@ internal static class PathParser
 
         public string ReadIdentifier()
         {
-            var start = _position;
+            var start = Position;
 
-            if (!HasMore || !IsIdentifierStart(text[_position]))
+            if (!HasMore || !IsIdentifierStart(text[Position]))
             {
-                throw new FormatException($"Expected identifier at position {_position} in '{text}'.");
+                throw new FormatException($"Expected identifier at position {Position} in '{text}'.");
             }
 
-            _position++;
+            Position++;
 
-            while (HasMore && IsIdentifierPart(text[_position]))
+            while (HasMore && IsIdentifierPart(text[Position]))
             {
-                _position++;
+                Position++;
             }
 
-            return text[start.._position];
+            return text[start..Position];
         }
 
         private static bool IsIdentifierStart(char c) => char.IsLetter(c) || c is '_' or '$';

@@ -96,8 +96,7 @@
             <div class="panel-header d-flex justify-content-between align-items-center">
                 <span class="d-flex align-items-center gap-2">
                     <span>JSON Data</span>
-                    <span class="validity @(JsonValid == true ? "valid" : JsonValid == false ? "invalid" : "")"
-                          title="@(JsonValid == true ? "Valid JSON" : JsonValid == false ? "Invalid JSON" : "")"></span>
+                    <span class="validity @JsonValidityClass" title="@JsonValidityTitle"></span>
                     @if (!string.IsNullOrEmpty(JsonSizeMeta))
                     {
                         <span class="result-meta">@JsonSizeMeta</span>

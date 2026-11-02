@@ -8,22 +8,22 @@ internal sealed class JsonNodeValueComparer : IEqualityComparer<JsonTree.Node>
 
     public bool Equals(JsonTree.Node? firstNode, JsonTree.Node? secondNode)
     {
+        if (ReferenceEquals(firstNode, secondNode))
+        {
+            return true;
+        }
+
         if (firstNode!.Kind != secondNode!.Kind)
         {
             return false;
         }
 
-        if (firstNode.Kind == JsonValueKind.Array)
+        return firstNode.Kind switch
         {
-            return firstNode.Children.SequenceEqual(secondNode.Children, this);
-        }
-
-        if (firstNode.Kind == JsonValueKind.Object)
-        {
-            return ObjectsEqual(firstNode.Children, secondNode.Children);
-        }
-
-        return ScalarsEqual(firstNode, secondNode);
+            JsonValueKind.Array => firstNode.Children.SequenceEqual(secondNode.Children, this),
+            JsonValueKind.Object => ObjectsEqual(firstNode.Children, secondNode.Children),
+            _ => ScalarsEqual(firstNode, secondNode)
+        };
     }
 
     public int GetHashCode(JsonTree.Node node)
@@ -31,64 +31,71 @@ internal sealed class JsonNodeValueComparer : IEqualityComparer<JsonTree.Node>
         var hash = new HashCode();
         hash.Add(node.Kind);
 
-        if (node.Kind == JsonValueKind.Object)
+        switch (node.Kind)
         {
-            hash.Add(GetObjectHashCode(node));
-        }
-        else if (node.Kind == JsonValueKind.Array)
-        {
-            AddArrayToHash(ref hash, node);
-        }
-        else
-        {
-            hash.Add(GetScalarHashCode(node));
+            case JsonValueKind.Object:
+                hash.Add(GetObjectHashCode(node));
+                break;
+            case JsonValueKind.Array:
+                AddArrayToHash(ref hash, node);
+                break;
+            case JsonValueKind.Undefined:
+            case JsonValueKind.String:
+            case JsonValueKind.Number:
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
+            default:
+                hash.Add(GetScalarHashCode(node));
+                break;
         }
 
         return hash.ToHashCode();
     }
 
-    private bool ObjectsEqual(IReadOnlyList<JsonTree.Node> firstProperties, IReadOnlyList<JsonTree.Node> secondProperties)
+    private static bool ObjectsEqual(IReadOnlyList<JsonTree.Node> firstProperties, IReadOnlyList<JsonTree.Node> secondProperties)
     {
         if (firstProperties.Count != secondProperties.Count)
         {
             return false;
         }
 
-        var matchedProperties = new bool[secondProperties.Count];
+        if (firstProperties.SequenceEqual(secondProperties, PropertyValueComparer.Shared))
+        {
+            return true;
+        }
+
+        var remainingProperties = new Dictionary<JsonTree.Node, int>(secondProperties.Count, PropertyValueComparer.Shared);
+
+        foreach (var property in secondProperties)
+        {
+            remainingProperties.TryGetValue(property, out var count);
+            remainingProperties[property] = count + 1;
+        }
 
         foreach (var firstProperty in firstProperties)
         {
-            var matchingIndex = FindMatchingPropertyIndex(firstProperty, secondProperties, matchedProperties);
-
-            if (matchingIndex < 0)
+            if (remainingProperties.Remove(firstProperty, out var count) is false)
             {
                 return false;
             }
 
-            matchedProperties[matchingIndex] = true;
+            if (count > 1)
+            {
+                remainingProperties.Add(firstProperty, count - 1);
+            }
         }
 
         return true;
     }
 
-    private int FindMatchingPropertyIndex(JsonTree.Node property, IReadOnlyList<JsonTree.Node> candidates, bool[] matchedProperties)
+    private sealed class PropertyValueComparer : IEqualityComparer<JsonTree.Node>
     {
-        for (var index = 0; index < candidates.Count; index++)
-        {
-            if (matchedProperties[index])
-            {
-                continue;
-            }
+        public static PropertyValueComparer Shared { get; } = new();
 
-            var candidate = candidates[index];
+        public bool Equals(JsonTree.Node? firstProperty, JsonTree.Node? secondProperty) => string.Equals(firstProperty!.Name, secondProperty!.Name, StringComparison.Ordinal) && Instance.Equals(firstProperty, secondProperty);
 
-            if (string.Equals(property.Name, candidate.Name, StringComparison.Ordinal) && Equals(property, candidate))
-            {
-                return index;
-            }
-        }
-
-        return -1;
+        public int GetHashCode(JsonTree.Node property) => HashCode.Combine(StringComparer.Ordinal.GetHashCode(property.Name), Instance.GetHashCode(property));
     }
 
     private int GetObjectHashCode(JsonTree.Node node)
