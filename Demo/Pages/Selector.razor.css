@@ -471,6 +471,10 @@
         min-height: 360px;
     }
 
+    .select-panel {
+        min-height: 0;
+    }
+
     .line-gutter,
     .code-wrap textarea,
     .code-wrap .json-output {
