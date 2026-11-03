@@ -23,6 +23,18 @@ public sealed class SelectorTests
     public async Task DisposeContext() => await _context.DisposeAsync();
 
     [Test]
+    public void Workspace_uses_DotNetLab_heading_and_accessible_query_label()
+    {
+        var component = _context.Render<Selector>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("h1").TextContent, Does.Contain("JSON Playground"));
+            Assert.That(component.Find("label[for='selector-input']").TextContent, Is.EqualTo("Query"));
+        }
+    }
+
+    [Test]
     public async Task Evaluates_the_latest_json_input_after_rapid_edits()
     {
         var component = _context.Render<Selector>();
