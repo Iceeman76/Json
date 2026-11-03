@@ -1,58 +1,168 @@
 .page {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
+    height: 100dvh;
 }
 
 .app-header {
-    background-color: #16273a;
-    color: #e6edf3;
-    border-bottom: 1px solid #2d3e4f;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    flex: 0 0 auto;
+    background: rgba(8, 13, 23, 0.89);
+    color: var(--lab-ink);
+    border-bottom: 1px solid var(--lab-line);
+    backdrop-filter: blur(14px);
 }
 
 .app-header-inner {
-    max-width: 1600px;
+    width: min(1600px, calc(100% - 3rem));
+    min-height: 5rem;
     margin: 0 auto;
-    padding: 0 1.5rem;
-    height: 3.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
 }
 
 .app-brand {
-    color: #e6edf3;
-    font-size: 1.4rem;
-    font-weight: 300;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: var(--lab-ink);
     text-decoration: none;
-    letter-spacing: 0.5px;
+    flex: 0 0 auto;
 }
 
-    .app-brand span {
-        color: #7ea6cc;
-        font-weight: 700;
-    }
-
-.app-nav a {
-    color: rgba(230, 237, 243, 0.85);
-    text-decoration: none;
-    font-size: 0.95rem;
+.app-brand:hover,
+.app-brand:focus-visible {
+    color: var(--lab-ink);
 }
 
-    .app-nav a:hover {
-        color: #7ea6cc;
-        text-decoration: underline;
-    }
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    width: 37px;
+    height: 37px;
+    border: 1px solid rgba(90, 212, 230, 0.46);
+    border-radius: 9px;
+    background: rgba(90, 212, 230, 0.05);
+    box-shadow: 0 0 28px rgba(51, 202, 223, 0.08);
+    color: var(--lab-accent);
+    font-family: var(--lab-mono);
+    font-size: 15px;
+    letter-spacing: -2px;
+}
+
+.brand-slash {
+    color: white;
+}
+
+.brand-name {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+}
+
+.brand-name span {
+    color: var(--lab-accent);
+}
+
+.app-nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+}
+
+.app-section {
+    font-family: var(--lab-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.13em;
+    color: var(--lab-dim);
+    white-space: nowrap;
+}
+
+.home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #b7c8d9;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: color 0.2s;
+}
+
+.home-link:hover {
+    color: var(--lab-accent);
+}
 
 .app-main {
     flex: 1;
     min-height: 0;
-    width: 100%;
-    max-width: 1600px;
+    width: min(1600px, calc(100% - 3rem));
     margin: 0 auto;
-    padding: 1.5rem;
-    box-sizing: border-box;
+    padding: 1.4rem 0 1.6rem;
     display: flex;
     flex-direction: column;
+}
+
+@media (max-width: 980px) {
+    .page {
+        height: auto;
+        min-height: 100dvh;
+    }
+
+    .app-main {
+        flex: 1 0 auto;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .app-header-inner,
+    .app-main {
+        width: calc(100% - 2rem);
+    }
+
+    .app-header-inner {
+        min-height: 4.5rem;
+    }
+
+    .brand-mark {
+        width: 33px;
+        height: 33px;
+    }
+
+    .brand-name {
+        font-size: 0.82rem;
+    }
+
+    .app-section {
+        display: none;
+    }
+
+    .home-link {
+        font-size: 0.75rem;
+    }
+
+    .home-link span {
+        display: none;
+    }
+
+    .home-link svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .app-main {
+        padding-top: 1.2rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-link {
+        transition: none;
+    }
 }

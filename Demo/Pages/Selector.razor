@@ -1,6 +1,14 @@
 @page "/"
 
-<PageTitle>JSON Selector</PageTitle>
+<PageTitle>JSON Playground — DotNetLab</PageTitle>
+
+<div class="workspace-heading">
+    <div class="workspace-kicker"><span class="kicker-bar" aria-hidden="true"></span> THE LAB / TOOL 01</div>
+    <div class="workspace-title-row">
+        <h1>JSON <span>Playground</span><span class="title-dot">.</span></h1>
+        <p>Explore data, compose selectors, and inspect results in real time.</p>
+    </div>
+</div>
 
 <div class="info-banner">
     <label class="query-label" for="example-select">Samples</label>
@@ -56,7 +64,7 @@
 <section class="panel select-panel">
     <div class="panel-body">
         <div class="d-flex gap-2 align-items-center">
-            <span class="query-label">Query</span>
+            <label class="query-label" for="selector-input">Query</label>
             <input id="selector-input" class="form-control font-monospace"
                    @bind="SelectorInput" @bind:event="oninput" @bind:after="ApplySelectorDebounced"
                    autocomplete="off"
