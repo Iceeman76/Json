@@ -37,25 +37,12 @@
     color: var(--lab-ink);
 }
 
-.brand-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1px;
+.brand-icon {
+    display: block;
     width: 37px;
     height: 37px;
-    border: 1px solid rgba(90, 212, 230, 0.46);
-    border-radius: 9px;
-    background: rgba(90, 212, 230, 0.05);
-    box-shadow: 0 0 28px rgba(51, 202, 223, 0.08);
-    color: var(--lab-accent);
-    font-family: var(--lab-mono);
-    font-size: 15px;
-    letter-spacing: -2px;
-}
-
-.brand-slash {
-    color: white;
+    flex: 0 0 auto;
+    object-fit: contain;
 }
 
 .brand-name {
@@ -130,7 +117,7 @@
         min-height: 4.5rem;
     }
 
-    .brand-mark {
+    .brand-icon {
         width: 33px;
         height: 33px;
     }
