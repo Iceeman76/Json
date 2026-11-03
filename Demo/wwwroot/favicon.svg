@@ -1,8 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title id="title">DotNetLab C sharp</title>
-  <rect x="2" y="2" width="60" height="60" rx="15" fill="#0d1929" stroke="#34647c" stroke-width="2"/>
-  <path d="M30 23c-2.3-2-4.8-3-7.7-3C16.2 20 13 25.2 13 32s3.2 12 9.3 12c2.9 0 5.4-1 7.7-3" fill="none" stroke="#eef3fa" stroke-width="5" stroke-linecap="round"/>
-  <g fill="none" stroke="#5ad4e6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M41 22 36 43M51 22 46 43M35 29h20M33 37h20"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">DotNetLab C sharp favicon</title>
+  <desc id="desc">Dark rounded square with cyan border, code brackets, C sharp monogram and orbital swooshes.</desc>
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="42%" r="72%">
+      <stop offset="0%" stop-color="#0b3251" stop-opacity="0.6"/>
+      <stop offset="46%" stop-color="#071725" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#08111d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10dff2"/>
+      <stop offset="100%" stop-color="#37f2f7"/>
+    </linearGradient>
+    <linearGradient id="bracket" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6ad5ff"/>
+      <stop offset="100%" stop-color="#328fd1"/>
+    </linearGradient>
+    <linearGradient id="cFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1fe0f8"/>
+      <stop offset="100%" stop-color="#57d9ff"/>
+    </linearGradient>
+    <linearGradient id="hashFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#52fff0"/>
+      <stop offset="100%" stop-color="#3ee3b7"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="#09131f"/>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#bgGlow)"/>
+  <rect x="2.5" y="2.5" width="59" height="59" rx="14.5" fill="none" stroke="#13def1" stroke-width="2"/>
+  <g fill="none" stroke="url(#orbit)" stroke-linecap="round" filter="url(#softGlow)" opacity="0.92">
+    <path d="M21 19.5 C26.5 12.9 41.8 12.1 50.2 19.2" stroke-width="2.4"/>
+    <path d="M14.8 47.2 C22.6 52.8 39.7 52.9 50.1 46" stroke-width="2.8"/>
+  </g>
+  <g fill="none" stroke="url(#bracket)" stroke-width="3.7" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+    <path d="M17.5 25.4 L10 32 L17.5 38.6"/>
+    <path d="M46.5 25.4 L54 32 L46.5 38.6"/>
+  </g>
+  <path d="M31.6 23.8 C29.5 21.8 27.2 20.9 24.6 20.9 C19.2 20.9 15.4 25.2 15.4 32 C15.4 38.7 19.2 43 24.6 43 C27.3 43 29.6 42 31.7 40.1" fill="none" stroke="url(#cFill)" stroke-width="5.1" stroke-linecap="round"/>
+  <g fill="none" stroke="url(#hashFill)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M35.8 23.7 L32.9 40.3"/>
+    <path d="M43.6 23.7 L40.7 40.3"/>
+    <path d="M31.1 28.7 L46.8 28.7"/>
+    <path d="M29.9 35.4 L45.6 35.4"/>
   </g>
 </svg>
