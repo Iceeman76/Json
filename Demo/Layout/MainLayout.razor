@@ -1,13 +1,30 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
 <div class="page">
     <header class="app-header">
         <div class="app-header-inner">
-            <a class="app-brand" href="">demo <span>json field selector</span></a>
+            <a class="app-brand" href="https://dotnetlab.se/" aria-label="DotNetLab homepage">
+                <span class="brand-mark" aria-hidden="true">
+                    <span>&lt;</span><span class="brand-slash">/</span><span>&gt;</span>
+                </span>
+                <span class="brand-name">DOTNET<span>LAB</span></span>
+            </a>
+
+            <nav class="app-nav" aria-label="Site navigation">
+                <span class="app-section">/ JSON PLAYGROUND</span>
+                <a class="home-link" href="https://dotnetlab.se/">
+                    <span>Back to DotNetLab</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                         stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                         stroke-linejoin="round" aria-hidden="true">
+                        <path d="M7 17 17 7M8 7h9v9" />
+                    </svg>
+                </a>
+            </nav>
         </div>
     </header>
 
-    <main class="app-main">
+    <main class="app-main" id="main">
         @Body
     </main>
 </div>
