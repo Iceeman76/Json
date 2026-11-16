@@ -6,6 +6,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using DotNetLab.Json;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Demo.Pages;
@@ -14,6 +15,9 @@ public sealed partial class Selector : IDisposable
 {
     [Inject]
     private IJSRuntime Js { get; set; } = null!;
+
+    [Inject]
+    private ILogger<Selector> Logger { get; set; } = null!;
 
     private string JsonInput { get; set; } = "";
     private string SelectorInput { get; set; } = "$";
@@ -43,11 +47,18 @@ public sealed partial class Selector : IDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!_guttersRegistered)
+        if (_guttersRegistered is false)
         {
-            await Js.InvokeVoidAsync("lineNumbers.register", "json-input", "json-gutter");
-            await Js.InvokeVoidAsync("lineNumbers.register", "result-output", "output-gutter");
-            _guttersRegistered = true;
+            try
+            {
+                await Js.InvokeVoidAsync("lineNumbers.register", "json-input", "json-gutter");
+                await Js.InvokeVoidAsync("lineNumbers.register", "result-output", "output-gutter");
+                _guttersRegistered = true;
+            }
+            catch (JSException exception)
+            {
+                Logger.LogWarning(exception, "Could not register line number gutters.");
+            }
         }
     }
 
@@ -225,9 +236,20 @@ public sealed partial class Selector : IDisposable
             return;
         }
 
-        var copied = await Js.InvokeAsync<bool>("clipboardCopy.copyText", SelectorInput);
+        bool copied;
 
-        if (!copied)
+        try
+        {
+            copied = await Js.InvokeAsync<bool>("clipboardCopy.copyText", SelectorInput);
+        }
+        catch (JSException exception)
+        {
+            Logger.LogWarning(exception, "Could not copy the query to the clipboard.");
+
+            return;
+        }
+
+        if (copied is false)
         {
             return;
         }
@@ -256,7 +278,6 @@ public sealed partial class Selector : IDisposable
         }
 
         QueryCopied = false;
-        StateHasChanged();
     }
 
     private bool JsonPasted { get; set; }
@@ -264,7 +285,18 @@ public sealed partial class Selector : IDisposable
 
     private async Task PasteJson()
     {
-        var text = await Js.InvokeAsync<string?>("clipboardCopy.readText");
+        string? text;
+
+        try
+        {
+            text = await Js.InvokeAsync<string?>("clipboardCopy.readText");
+        }
+        catch (JSException exception)
+        {
+            Logger.LogWarning(exception, "Could not read JSON from the clipboard.");
+
+            return;
+        }
 
         if (string.IsNullOrEmpty(text))
         {
@@ -298,7 +330,6 @@ public sealed partial class Selector : IDisposable
         }
 
         JsonPasted = false;
-        StateHasChanged();
     }
 
     private enum ResultView

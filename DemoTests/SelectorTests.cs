@@ -5,6 +5,7 @@ using Bunit;
 using Demo.Pages;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 namespace DemoTests;
 
@@ -194,6 +195,40 @@ public sealed class SelectorTests
         await _context.DisposeComponentsAsync();
 
         Assert.That(async () => await pendingInput, Throws.Nothing);
+    }
+
+    [TestCase("Copy query")]
+    [TestCase("Paste JSON")]
+    public async Task Clipboard_failures_preserve_the_current_input_and_result(string buttonTitle)
+    {
+        _context.JSInterop.Setup<bool>("clipboardCopy.copyText", invocation => invocation.Arguments.Count is 1).SetException(new JSException("Clipboard unavailable"));
+        _context.JSInterop.Setup<string?>("clipboardCopy.readText").SetException(new JSException("Clipboard unavailable"));
+        var component = _context.Render<Selector>();
+        await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = "42" });
+        await component.Find($"button[title='{buttonTitle}']").ClickAsync(new MouseEventArgs());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#json-input").GetAttribute("value"), Is.EqualTo("42"));
+            Assert.That(component.Find("#result-output").TextContent, Is.EqualTo("42"));
+            Assert.That(component.Find($"button[title='{buttonTitle}']").ClassList, Does.Not.Contain("copied"));
+        }
+    }
+
+    [Test]
+    public async Task Gutter_registration_recovers_after_a_javascript_failure()
+    {
+        var registration = _context.JSInterop.SetupVoid("lineNumbers.register", invocation => invocation.Arguments.Count is 2);
+        registration.SetException(new JSException("Line numbers unavailable"));
+        var component = _context.Render<Selector>();
+        registration.SetVoidResult();
+        await component.Find("#json-input").InputAsync(new ChangeEventArgs { Value = "42" });
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Find("#result-output").TextContent, Is.EqualTo("42"));
+            Assert.That(registration.Invocations.Any(invocation => invocation.Arguments[0] is "result-output"), Is.True);
+        }
     }
 
     [TestCase("Copy query")]

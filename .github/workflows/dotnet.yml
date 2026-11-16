@@ -21,7 +21,9 @@ jobs:
         with:
           dotnet-version: 11.0.x
           cache: true
-          cache-dependency-path: "**/*.csproj"
+          cache-dependency-path: |
+            **/*.csproj
+            Directory.Packages.props
       - name: Install WebAssembly workload
         run: dotnet workload install wasm-tools
       - name: Restore dependencies

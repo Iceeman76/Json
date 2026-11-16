@@ -8,6 +8,8 @@ A .NET library for parsing JSON into a navigable tree and extracting fields via 
 
 Requires the .NET 11 SDK.
 
+NuGet package versions are managed centrally in `Directory.Packages.props`. Add or update versions there and keep project `PackageReference` entries without a `Version` attribute.
+
 [Try the interactive playground at json.dotnetlab.se](https://json.dotnetlab.se).
 
 ## JsonTree
