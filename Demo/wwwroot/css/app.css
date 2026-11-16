@@ -218,39 +218,83 @@ code {
     content: 'An error has occurred.';
 }
 
-.loading-progress {
-    position: absolute;
-    display: block;
-    width: 8rem;
-    height: 8rem;
-    inset: 20vh 0 auto;
-    margin: 0 auto;
+.startup-screen {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 2rem;
 }
 
-.loading-progress circle {
-    fill: none;
-    stroke: #27394b;
-    stroke-width: 0.6rem;
-    transform-origin: 50% 50%;
-    transform: rotate(-90deg);
+.startup-panel {
+    width: min(100%, 26rem);
 }
 
-.loading-progress circle:last-child {
-    stroke: var(--lab-accent);
-    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-    transition: stroke-dasharray 0.05s ease-in-out;
+.startup-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    font-family: var(--lab-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    color: var(--lab-muted);
 }
 
-.loading-progress-text {
-    position: absolute;
-    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
-    text-align: center;
-    font-weight: 700;
-    color: var(--lab-ink);
+.startup-brand span {
+    font-size: 1.3rem;
+    color: var(--lab-accent);
 }
 
-.loading-progress-text::after {
-    content: var(--blazor-load-percentage-text, 'Loading');
+.startup-title {
+    margin: 0 0 2rem;
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.startup-title span {
+    color: var(--lab-accent);
+}
+
+.startup-status {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-family: var(--lab-mono);
+    font-size: 0.75rem;
+    color: var(--lab-muted);
+}
+
+.startup-percentage {
+    color: var(--lab-accent);
+    font-variant-numeric: tabular-nums;
+}
+
+.startup-percentage::after {
+    content: var(--blazor-load-percentage-text, 'Starting…');
+}
+
+.startup-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--lab-surface-highlight);
+}
+
+.startup-fill {
+    width: var(--blazor-load-percentage, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--lab-accent), var(--lab-accent-green));
+    transition: width 0.15s ease-out;
+}
+
+.startup-hint {
+    margin: 1rem 0 0;
+    font-size: 0.75rem;
+    color: var(--lab-muted);
 }
 
 @media (max-width: 600px) {

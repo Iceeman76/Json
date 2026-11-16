@@ -18,11 +18,20 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="startup-screen" role="status" aria-live="polite">
+            <div class="startup-panel">
+                <div class="startup-brand"><span aria-hidden="true">{ }</span> DOTNETLAB</div>
+                <h1 class="startup-title">JSON Playground<span>.</span></h1>
+                <div class="startup-status">
+                    <span>Loading playground</span>
+                    <span class="startup-percentage" aria-hidden="true"></span>
+                </div>
+                <div class="startup-track" aria-hidden="true">
+                    <div class="startup-fill"></div>
+                </div>
+                <p class="startup-hint">Getting your workspace ready.</p>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
