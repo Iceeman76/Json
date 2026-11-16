@@ -6,6 +6,8 @@
 
 A .NET library for parsing JSON into a navigable tree and extracting fields via a JSONPath-like query syntax.
 
+Requires the .NET 11 SDK.
+
 [Try the interactive playground at json.dotnetlab.se](https://json.dotnetlab.se).
 
 ## JsonTree
@@ -273,6 +275,13 @@ Run it locally with:
 
 ```
 dotnet run --project Demo
+```
+
+Release publishing uses WebAssembly AOT compilation and requires the `wasm-tools` workload. Install the required workload before publishing:
+
+```
+dotnet workload install wasm-tools
+dotnet publish Demo/Demo.csproj --configuration Release
 ```
 
 Features:
