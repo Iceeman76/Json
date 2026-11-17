@@ -22,4 +22,15 @@
     <ProjectReference Include="..\Json\Json.csproj" />
   </ItemGroup>
 
+  <Target Name="GenerateBuildInfo" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <BuildTimestamp>$([System.DateTime]::UtcNow.ToString('s').Replace('T', ' '))</BuildTimestamp>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)BuildInfo.g.cs" Lines="namespace Demo%3B internal static class BuildInfo { internal const string Timestamp = &quot;$(BuildTimestamp)&quot;%3B }" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)BuildInfo.g.cs" />
+      <FileWrites Include="$(IntermediateOutputPath)BuildInfo.g.cs" />
+    </ItemGroup>
+  </Target>
+
 </Project>
