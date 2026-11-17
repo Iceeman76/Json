@@ -1,0 +1,29 @@
+{
+  "Repository": "Iceeman76/Json",
+  "WebsiteAddress": "https://json.dotnetlab.se/",
+  "Host": "209.38.197.82",
+  "User": "deployjson",
+  "Root": "/opt/apps/dotnetlab/json",
+  "Project": {
+    "Path": "Demo/Demo.csproj",
+    "Name": "Demo",
+    "Kind": 1,
+    "Framework": "net11.0",
+    "SdkVersion": "11.0.x",
+    "OutputDirectory": "publish/wwwroot",
+    "RequiredSettings": [],
+    "Blockers": [],
+    "SuggestedHealthPath": null,
+    "RequiresWasmTools": true
+  },
+  "TemplateVersion": 1,
+  "Port": 22,
+  "PublicLink": "wwwroot",
+  "KeepDeploymentHistory": false,
+  "PrivateKeySecret": "JSON_DEPLOY_PRIVATE_KEY",
+  "KnownHostsSecret": "JSON_DEPLOY_KNOWN_HOSTS",
+  "TestProjects": [
+    "JsonTests/JsonTests.csproj",
+    "DemoTests/DemoTests.csproj"
+  ]
+}

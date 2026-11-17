@@ -1,0 +1,73 @@
+name: Control Center cc-5df5310bf913
+on:
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: Exact source commit to publish
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: control-center-cc-5df5310bf913
+  cancel-in-progress: false
+env:
+  CONTROL_CENTER_SITE: cc-5df5310bf913
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out deployment scripts
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: deployment-tools
+          persist-credentials: false
+      - name: Check out approved source
+        uses: actions/checkout@v7
+        with:
+          repository: "Iceeman76/Json"
+          ref: ${{ inputs.source_revision }}
+          path: source
+          persist-credentials: false
+      - name: Validate deployment scripts
+        run: |
+          bash -n deployment-tools/.control-center/deploy.sh
+          bash -n deployment-tools/.control-center/activate.sh
+          bash -n deployment-tools/.control-center/cleanup.sh
+      - name: Set up .NET
+        id: sdk
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "11.0.x"
+      - name: Select build SDK
+        working-directory: source
+        env:
+          SDK_VERSION: ${{ steps.sdk.outputs.dotnet-version }}
+        run: |
+          if test ! -f global.json; then printf '{"sdk":{"version":"%s"}}\n' "$SDK_VERSION" > global.json; fi
+      - name: Install WebAssembly AOT tools
+        working-directory: source
+        run: dotnet workload install wasm-tools --skip-manifest-update
+      - name: Test JsonTests/JsonTests.csproj
+        working-directory: source
+        run: dotnet test 'JsonTests/JsonTests.csproj' -c Release --verbosity minimal
+      - name: Test DemoTests/DemoTests.csproj
+        working-directory: source
+        run: dotnet test 'DemoTests/DemoTests.csproj' -c Release --verbosity minimal
+      - name: Publish website
+        working-directory: source
+        run: |
+          dotnet publish 'Demo/Demo.csproj' -c Release -o "$RUNNER_TEMP/publish"
+      - name: Deploy and verify existing website
+        env:
+          DEPLOY_KEY: ${{ secrets.JSON_DEPLOY_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.JSON_DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: "209.38.197.82"
+          DEPLOY_PORT: '22'
+          DEPLOY_USER: "deployjson"
+          DEPLOY_ROOT: "/opt/apps/dotnetlab/json"
+          DEPLOY_PUBLIC_LINK: "wwwroot"
+          DEPLOY_URL: "https://json.dotnetlab.se/"
+          KEEP_HISTORY: 'false'
+        run: bash deployment-tools/.control-center/deploy.sh "$RUNNER_TEMP/publish/wwwroot" source deployment-tools/.control-center
