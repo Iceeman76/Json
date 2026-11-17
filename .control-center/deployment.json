@@ -25,5 +25,6 @@
   "TestProjects": [
     "JsonTests/JsonTests.csproj",
     "DemoTests/DemoTests.csproj"
-  ]
+  ],
+  "WorkflowName": "Publish JSON Playground"
 }
